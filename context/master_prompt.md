@@ -1,0 +1,96 @@
+# MASTER PROMPT : Ant-Liquid-Brain-AI (v2)
+
+## 1. Objectif
+Simulation d'une colonie de fourmis (SMA) en Python.
+L'intelligence collective doit emerger de comportements individuels bio-inspires.
+
+## 2. Vision Neuronale (architecture centrale)
+La colonie est representee par un grand reseau de neurones.
+Ce grand reseau contient un unique sous-reseau, duplique autant de fois
+qu'il y a de fourmis dans la colonie.
+
+Regles fondamentales :
+- Toutes les fourmis partagent exactement les memes poids (meme sous-reseau)
+- Ce qui differencie le comportement de chaque fourmi : ses entrees perceptives
+  (position, pheromones detectees, obstacles, nourriture...)
+- Le meme reseau produit des comportements differents car les entrees sont differentes
+- C'est CE sous-reseau unique qui est evolue par l'algorithme genetique
+
+Algorithme genetique envisage : MAP-Elites (a confirmer)
+
+## 3. Role de l'IA (Claude)
+- Ce fichier est le fichier de contexte du projet. A chaque nouvelle conversation,
+  il doit etre fourni a Claude pour restaurer integralement le contexte.
+- Ce fichier ne doit contenir QUE des caracteres disponibles sur un clavier classique.
+  Aucun emoji, aucun caractere special Unicode. Cela vaut pour toutes les mises a jour
+  futures de ce fichier.
+- JAMAIS de code complet non sollicite
+- Progression par etapes -> indices -> pseudocode -> solution si demande explicite
+- Mot-cle de deverrouillage : "Donne-moi la solution"
+- Source de verite scientifique : research_notes.md (prioritaire) + connaissances internes
+- Mettre a jour ce fichier apres chaque etape validee
+- Proposer une mise a jour de ce fichier apres chaque decision technique validee
+  (choix de bibliotheque, architecture, parametres, contraintes machines...)
+- Proposer une mise a jour apres chaque etape cochee dans l'Etat d'Avancement
+
+## 4. Contexte Materiel
+Appareil    : Microsoft Surface Pro 9
+Processeur  : Intel Core i5-1235U 12e gen (2.50 GHz, 10 coeurs)
+RAM         : 16 Go (15.8 Go utilisable), partagee entre CPU et GPU
+GPU         : Intel Iris Xe Graphics (integre, memoire partagee avec la RAM)
+OS          : Windows 11 64 bits
+Saisie      : Stylet + tactile 10 points
+IDE         : Visual Studio Code
+Versioning  : GitHub
+
+Contraintes :
+- Pas de CUDA (pas de GPU Nvidia) -> PyTorch tourne en mode CPU
+- Le GPU Intel Xe est accessible via Intel Extension for PyTorch (IPEX)
+  mais complexe a configurer -> approche CPU-first retenue pour l'instant
+- Privilegier le batching NumPy/PyTorch plutot que le parallelisme GPU
+- Memoire partagee CPU/GPU : surveiller la consommation RAM en simulation
+
+## 5. Architecture (fichiers existants uniquement)
+Ant-Liquid-Brain-AI/
+|-- main.py                  # Boucle principale : Init -> Update -> Render
+|-- core/                    # Logique pure de simulation (vide)
+|-- ai_context/
+|   |-- master_prompt.md     # Ce fichier
+|   |-- research_notes.md    # Notes scientifiques (vide)
+|-- requirements.txt         # Bibliotheques du projet (sert a creer l'env conda)
+
+Note : l'arborescence sera mise a jour uniquement quand un fichier
+est effectivement cree, sur instruction explicite.
+
+## 6. Environnement Technique
+Gestionnaire : Conda
+IDE          : Visual Studio Code
+Versioning   : GitHub
+
+Bibliotheques validees (Etape 0) :
+- pygame==2.5.x       # Rendu visuel, boucle de jeu
+- numpy==1.26.x       # Grille pheromones, calculs vectorises
+- torch==2.2.x        # Sous-reseau neuronal, batching CPU
+- scipy==1.12.x       # Diffusion gaussienne pheromones
+- matplotlib==3.8.x   # Courbes evolution GA (optionnel)
+
+Approche retenue : CPU-first (PyTorch mode CPU)
+IPEX (GPU Intel Xe) : possible plus tard mais non prioritaire
+
+## 7. Conventions de Nommage
+- Classes    : PascalCase        -> Ant, Colony, PheromoneGrid
+- Methodes   : snake_case        -> update_pheromones(), decay_rate
+- Constantes : SCREAMING_SNAKE   -> MAX_ANTS, EVAPORATION_RATE
+- Fichiers   : snake_case        -> ant.py, pheromone_grid.py
+
+## 8. Gestion des Erreurs
+- Toute fonction publique gere ses cas limites (hors-bounds, colonie vide...)
+- Pas d'exceptions silencieuses : log ou raise explicite
+- Les parametres biologiques ne doivent jamais etre hardcodes (config.py a venir)
+
+## 9. Etat d'Avancement
+- [ ] Etape 0 : Environnement & bibliotheques
+- [ ] Etape 1 : Grille & pheromones
+- [ ] Etape 2 : Agent Fourmi (comportement de base)
+- [ ] Etape 3 : Colonie & emergence
+- [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)

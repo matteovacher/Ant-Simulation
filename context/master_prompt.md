@@ -16,7 +16,13 @@ Regles fondamentales :
 - Le meme reseau produit des comportements differents car les entrees sont differentes
 - C'est CE sous-reseau unique qui est evolue par l'algorithme genetique
 
-Algorithme genetique envisage : MAP-Elites (a confirmer)
+Algorithme genetique retenu : MAP-Elites
+Dimensions comportementales : a definir lors de l'Etape 4
+
+Reference scientifique cle :
+- Crosscombe et al. (2024), "A Simulation Environment for the Neuroevolution
+  of Ant Colony Dynamics", ALIFE 2024. arXiv:2406.13147
+  (approche tres proche de ce projet)
 
 ## 3. Role de l'IA (Claude)
 - Ce fichier est le fichier de contexte du projet. A chaque nouvelle conversation,
@@ -53,6 +59,7 @@ Contraintes :
 ## 5. Architecture (fichiers existants uniquement)
 Ant-Liquid-Brain-AI/
 |-- main.py                  # Boucle principale : Init -> Update -> Render
+|-- config.py                # Parametres globaux (constantes, jamais hardcodes)
 |-- core/                    # Logique pure de simulation (vide)
 |-- ai_context/
 |   |-- master_prompt.md     # Ce fichier
@@ -68,11 +75,11 @@ IDE          : Visual Studio Code
 Versioning   : GitHub
 
 Bibliotheques validees (Etape 0) :
-- pygame==2.5.x       # Rendu visuel, boucle de jeu
-- numpy==1.26.x       # Grille pheromones, calculs vectorises
-- torch==2.2.x        # Sous-reseau neuronal, batching CPU
-- scipy==1.12.x       # Diffusion gaussienne pheromones
-- matplotlib==3.8.x   # Courbes evolution GA (optionnel)
+- pygame          # Rendu visuel, boucle de jeu
+- numpy           # Grille pheromones, calculs vectorises
+- torch           # Sous-reseau neuronal, batching CPU
+- scipy           # Diffusion gaussienne pheromones
+- matplotlib      # Courbes evolution GA (optionnel)
 
 Approche retenue : CPU-first (PyTorch mode CPU)
 IPEX (GPU Intel Xe) : possible plus tard mais non prioritaire
@@ -89,8 +96,31 @@ IPEX (GPU Intel Xe) : possible plus tard mais non prioritaire
 - Les parametres biologiques ne doivent jamais etre hardcodes (config.py a venir)
 
 ## 9. Etat d'Avancement
-- [ ] Etape 0 : Environnement & bibliotheques
+- [x] Etape 0 : Environnement & bibliotheques
 - [ ] Etape 1 : Grille & pheromones
 - [ ] Etape 2 : Agent Fourmi (comportement de base)
 - [ ] Etape 3 : Colonie & emergence
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
+
+## 10. Communication & Documentation
+Site web personnel : deja cree (Hugo)
+Objectif : publier les etapes du projet au fur et a mesure
+-> Apres chaque etape validee, proposer un resume brut
+   que je reformulerai moi-meme avant publication
+-> Le resume doit etre clair, sans jargon excessif,
+   et servir de base de travail, pas de version finale
+-> Conserver une coherence entre le vocabulaire du code
+   et celui utilise dans les articles
+
+## 11. Profil Developpeur
+Formation   : Supaero 2e annee (M1), apres MPSI/PSI* (Saint-Louis)
+Niveau      : Bon en algorithmique et mathematiques
+Langages    : Java (POO maitrisee), Python (algorithmique uniquement en prepa,
+              pas d'experience en POO Python)
+Point faible : Architecture systeme (conception modulaire, decoupage responsabilites)
+-> Expliquer les specificites de la POO Python par rapport a Java quand necessaire
+   (syntaxe, conventions, __init__, self, proprietes, etc.)
+-> Privilegier les explications d'architecture avec schemas et analogies
+-> Pas besoin de rappeler les bases algorithmiques
+
+Site web    : matteovacher.github.io

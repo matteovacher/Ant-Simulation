@@ -60,8 +60,10 @@ Contraintes :
 Ant-Liquid-Brain-AI/
 |-- main.py                  # Boucle principale : Init -> Update -> Render
 |-- config.py                # Parametres globaux (constantes, jamais hardcodes)
-|-- core/                    # Logique pure de simulation (vide)
-|-- ai_context/
+|-- core/
+|   |-- pheromone_grid.py    # Classe PheromoneGrid (evaporation, diffusion, depot)
+|   |-- environment.py       # Classe Environment (contient PheromoneGrid et position nid)
+|-- context/
 |   |-- master_prompt.md     # Ce fichier
 |   |-- research_notes.md    # Notes scientifiques (vide)
 |-- requirements.txt         # Bibliotheques du projet (sert a creer l'env conda)
@@ -94,10 +96,11 @@ IPEX (GPU Intel Xe) : possible plus tard mais non prioritaire
 - Toute fonction publique gere ses cas limites (hors-bounds, colonie vide...)
 - Pas d'exceptions silencieuses : log ou raise explicite
 - Les parametres biologiques ne doivent jamais etre hardcodes (config.py a venir)
+- Verifications de bornes : raise ValueError avec message explicite (position hors grille, type invalide...)
 
 ## 9. Etat d'Avancement
 - [x] Etape 0 : Environnement & bibliotheques
-- [ ] Etape 1 : Grille & pheromones
+- [ ] Etape 1 : Grille & pheromones (PheromoneGrid valide, affichage pygame en cours)
 - [ ] Etape 2 : Agent Fourmi (comportement de base)
 - [ ] Etape 3 : Colonie & emergence
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)

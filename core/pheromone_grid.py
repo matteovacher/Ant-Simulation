@@ -35,15 +35,17 @@ class PheromoneGrid :
                         output = self.grids, # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
                         mode = 'constant', # ici on arrete le monde au bord sans rebond 
                         cval = 0.0, # val a l'ext ici nul au dela de la limite  
-                        truncate = 4.0, 
+                        truncate = 6.0, 
                         radius = None, # jsute calcul via sigma  
                         axes = (1,2) # applique en 2D
                         ) 
 
         # si la valeur est trop faible on la met à 0 
-        self.grids[self.grids < 0.01] = 0 
+        self.grids[self.grids < 0.0001] = 0 
 
     def add_pheromones(self, type_of_pheromone, x, y, value) :
+        if value < 0 or value > 1 :
+            raise ValueError(f"La valeur de phéromone doit etre comprise entre 0 et 1")
         # on verif que la case est dans les limites de la grille 
         if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")

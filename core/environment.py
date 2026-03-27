@@ -1,4 +1,4 @@
-from pheromone_grid import PheromoneGrid
+from core.pheromone_grid import PheromoneGrid
 from config import *
 import numpy as np
 
@@ -34,6 +34,6 @@ class Environment :
         rgb[:, :, 0] = red_array
         rgb[:, :, 1] = green_array
         rgb[:, :, 2] = blue_array
-        return rgb
+        return rgb.astype(np.uint8)
 
 

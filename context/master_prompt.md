@@ -1,4 +1,4 @@
-# MASTER PROMPT : Ant-Liquid-Brain-AI (v2)
+# MASTER PROMPT : Ant-Liquid-Brain-AI (v3)
 
 ## 1. Objectif
 Simulation d'une colonie de fourmis (SMA) en Python.
@@ -61,12 +61,15 @@ Ant-Liquid-Brain-AI/
 |-- main.py                  # Boucle principale : Init -> Update -> Render
 |-- config.py                # Parametres globaux (constantes, jamais hardcodes)
 |-- core/
-|   |-- pheromone_grid.py    # Classe PheromoneGrid (evaporation, diffusion, depot)
-|   |-- environment.py       # Classe Environment (contient PheromoneGrid et position nid)
-|-- context/
+|   |-- pheromone_grid.py    # Grille pheromones (2, H, W) : evaporation + diffusion
+|   |-- environment.py       # Agregat PheromoneGrid + Nest, surface de rendu
+|   |-- nest.py              # Position du nid, validation des bornes
+|-- ai_context/
 |   |-- master_prompt.md     # Ce fichier
-|   |-- research_notes.md    # Notes scientifiques (vide)
-|-- requirements.txt         # Bibliotheques du projet (sert a creer l'env conda)
+|   |-- research_notes.md    # Notes scientifiques
+|-- tests/
+|   |-- tests_pheromones.py  # Test interactif souris : depot HOME/FOOD, rendu pygame
+|-- requirements.txt         # Bibliotheques du projet
 
 Note : l'arborescence sera mise a jour uniquement quand un fichier
 est effectivement cree, sur instruction explicite.
@@ -96,16 +99,40 @@ IPEX (GPU Intel Xe) : possible plus tard mais non prioritaire
 - Toute fonction publique gere ses cas limites (hors-bounds, colonie vide...)
 - Pas d'exceptions silencieuses : log ou raise explicite
 - Les parametres biologiques ne doivent jamais etre hardcodes (config.py a venir)
-- Verifications de bornes : raise ValueError avec message explicite (position hors grille, type invalide...)
 
-## 9. Etat d'Avancement
+## 9. Decisions Techniques Validees (Etape 1)
+
+### Grille de pheromones
+- Structure : np.zeros((2, GRID_HEIGHT, GRID_WIDTH))
+- Deux types : HOME = 0 (fourmis quittant le nid), FOOD = 1 (fourmis portant de la nourriture)
+- Evaporation : modele cinetique du premier ordre (Edelstein-Keshet et al. 1995)
+  -> discretise en C_{t+1} = C_t * EVAPORATION_RATE
+  -> implementee comme self.grids *= EVAPORATION_RATE (une seule multiplication)
+- Diffusion : filtre gaussien scipy (solution exacte de la PDE de diffusion lineaire)
+  -> axes=(1,2) obligatoire pour ne pas melanger HOME et FOOD
+  -> parametre DIFFUSION_SIGMA a calibrer empiriquement
+- Seuil de nettoyage : valeurs < 1e-4 mises a zero pour eviter accumulation numerique
+- Ordre des operations : evaporation -> diffusion -> depot
+
+### Nid (Nest)
+- Classe Nest : position (x, y) + validation des bornes (raise ValueError si hors grille)
+- Rayon du nid : NEST_RADIUS (config.py)
+- Rendu : masque circulaire vectorise via np.ogrid
+
+### Environnement (Environment)
+- Agregat de PheromoneGrid et Nest
+- Rendu pheromones : logique dominant (HOME vs FOOD) -> RGB vectorise, transposition
+  pour pygame (numpy indexe (y,x), pygame attend (x,y))
+- Rendu nid : surface separee superposee aux pheromones
+
+## 10. Etat d'Avancement
 - [x] Etape 0 : Environnement & bibliotheques
-- [ ] Etape 1 : Grille & pheromones (PheromoneGrid valide, affichage pygame en cours)
+- [x] Etape 1 : Grille & pheromones
 - [ ] Etape 2 : Agent Fourmi (comportement de base)
 - [ ] Etape 3 : Colonie & emergence
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
 
-## 10. Communication & Documentation
+## 11. Communication & Documentation
 Site web personnel : deja cree (Hugo)
 Objectif : publier les etapes du projet au fur et a mesure
 -> Apres chaque etape validee, proposer un resume brut
@@ -115,7 +142,11 @@ Objectif : publier les etapes du projet au fur et a mesure
 -> Conserver une coherence entre le vocabulaire du code
    et celui utilise dans les articles
 
-## 11. Profil Developpeur
+Articles publies :
+- Etape 1 : "Step 1 of Ant Simulation Project : Pheromones"
+  (grille pheromones, evaporation, diffusion, rendu pygame)
+
+## 12. Profil Developpeur
 Formation   : Supaero 2e annee (M1), apres MPSI/PSI* (Saint-Louis)
 Niveau      : Bon en algorithmique et mathematiques
 Langages    : Java (POO maitrisee), Python (algorithmique uniquement en prepa,

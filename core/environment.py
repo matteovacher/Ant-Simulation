@@ -1,19 +1,18 @@
 from core.pheromone_grid import PheromoneGrid
 from config import *
 import numpy as np
+from core.nest import Nest
 
 
 class Environment : 
 
-    def __init__(self, pheromone_grids, x_nest, y_nest) : 
+    def __init__(self, pheromone_grids, nest) : 
         self.pheromone_grids = pheromone_grids
-        self.x_nest = x_nest 
-        self.y_nest = y_nest
-        if self.x_nest < 0 or self.x_nest >= GRID_WIDTH or self.y_nest < 0 or self.y_nest >= GRID_HEIGHT : 
-            raise ValueError(f"Position ({self.x_nest}, {self.y_nest}) hors des limites de la grille")
+        self.nest = nest
+
 
     def get_x_y(self) : 
-        return self.x_nest, self.y_nest
+        return self.nest.get_x_y()
     
     def update_environnement(self) : 
         self.pheromone_grids.update_pheromone()
@@ -35,5 +34,13 @@ class Environment :
         rgb[:, :, 1] = green_array
         rgb[:, :, 2] = blue_array
         return rgb.astype(np.uint8)
+    
+    def get_nest_surface(self) : 
+        surface = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+        x, y = self.nest.get_x_y()
+        dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]
+        mask = dx**2 + dy**2 <= NEST_RADIUS**2
+        surface[y-NEST_RADIUS:y+NEST_RADIUS+1, x-NEST_RADIUS:x+NEST_RADIUS+1][mask] = COLOR_NEST
+        return surface.astype(np.uint8)    
 
 

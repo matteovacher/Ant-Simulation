@@ -1,3 +1,5 @@
+import numpy as np 
+
 # grille et pheromones 
 
 EVAPORATION_RATE = 0.999   # entre 0 et 1 on def une suite geo 
@@ -19,3 +21,8 @@ COLOR_NEST = (255, 255, 255) # couleur blanc
 NEST_RADIUS = 2 # rayon du nid 
 NEST_X = 100    # coordonnees du nid
 NEST_Y = 100    # coordonnees du nid
+
+# ant 
+ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
+N_ANTS = 10 
+COLOR_ANT = (255, 165, 0) # couloeur orange 

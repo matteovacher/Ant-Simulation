@@ -4,7 +4,7 @@ from core.pheromone_grid import PheromoneGrid
 
 class Ant : 
 
-    def __init__(self, x, y, grids, angle_antenna) :
+    def __init__(self, x, y, grids, angle_antenna, length_antenna ) :
 
         self.x = x
         self.y = y 
@@ -13,6 +13,7 @@ class Ant :
         self.pheromone_grid = grids
         self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
         self.angle_antenna = angle_antenna
+        self.length_antenna = length_antenna  # longueur de l'antenne en cases
 
     def move(self,delta_theta,  put_pheromones, value_pheromone) : 
         self.direction += delta_theta
@@ -40,7 +41,7 @@ class Ant :
 
     
     def get_antenna_pos(self) : 
-        return [(self.x + np.cos(self.direction + self.angle_antenna), self.y + np.sin(self.direction + self.angle_antenna)), (self.x + np.cos(self.direction - self.angle_antenna), self.y + np.sin(self.direction - self.angle_antenna))] 
+        return [(self.x + self.length_antenna*np.cos(self.direction + self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction + self.angle_antenna)), (self.x + self.length_antenna*np.cos(self.direction - self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
 
 
 

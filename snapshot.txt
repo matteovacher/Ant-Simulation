@@ -1,0 +1,402 @@
+# SNAPSHOT DU PROJET
+# Genere le : 2026-04-02 23:06:13
+# Fichiers inclus : 10
+# Extensions : .py
+
+============================================================
+
+
+# === .\config.py ===
+
+import numpy as np 
+
+# grille et pheromones 
+
+EVAPORATION_RATE = 0.999   # entre 0 et 1 on def une suite geo 
+GRID_WIDTH = 360     # largeur de la grille en case 
+GRID_HEIGHT = 240       # hauteur de la grille aussi en case 
+DIFFUSION_SIGMA = 0.3    # pour la diffusion des pheromones et scipy 
+CELL_SIZE = 3           # taille de la case en pixels
+FPS = 24                # images par seconde
+WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE       # largeur de la fenetre = width*cellsize (2880 pixels max )
+WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE     # hauteur de la fenetre = height*cellsize (1920 pixels max )
+
+
+# env
+#  
+COLOR_HOME = (139, 90, 43) # couleur marron 
+COLOR_FOOD = (50, 205, 50) # couleur vert 
+COLOR_BACKGROUND = (0, 0, 0) # couleur noir 
+COLOR_NEST = (255, 255, 255) # couleur blanc 
+NEST_RADIUS = 2 # rayon du nid 
+NEST_X = 100    # coordonnees du nid
+NEST_Y = 100    # coordonnees du nid
+
+# ant 
+LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
+ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
+N_ANTS = 10 
+COLOR_ANT = (255, 165, 0) # couloeur orange 
+
+
+# === .\main.py ===
+
+from core.environment import Environment
+from core.pheromone_grid import PheromoneGrid
+from config import *
+import pygame
+import numpy as np 
+import tests.tests_pheromones as tp 
+from core.nest import Nest
+from core.ant import Ant 
+
+if __name__ == "__main__" :
+
+    pygame.init()
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("Simulation Grid")
+    clock = pygame.time.Clock()
+
+    pheromone_grids = PheromoneGrid()
+    nest = Nest(NEST_X, NEST_Y)
+    env = Environment(pheromone_grids, nest) # emplacement du nid au milieu
+
+    running = True 
+
+    ants = [Ant(NEST_X, NEST_Y, pheromone_grids, ANGLE_ANTENNA) for i in range(N_ANTS)]
+
+    while running : 
+
+        for event in pygame.event.get() : 
+            if event.type == pygame.QUIT : 
+                running = False
+            
+        tp.mouse_brush(pheromone_grids)
+        
+        screen.fill("black")
+
+        env.update_environnement()
+
+        env_surface = env.get_pheromone_surface()
+
+        for ant in ants : 
+            delta_theta = np.random.uniform(-np.pi/6, np.pi/6) # on ajoute un peu de bruit pour eviter les comportements trop deterministes
+            ant.move(delta_theta, put_pheromones = True, value_pheromone = 0.7)
+
+            env_surface[int(ant.y), int(ant.x)] = COLOR_ANT # on affiche les fourmis en blanc
+
+        env_nest = env.get_nest_surface()
+        nest_mask = np.any(env_nest != 0, axis = 2)
+
+        env_surface[nest_mask] = env_nest[nest_mask]
+
+        actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
+
+        actual_surface = pygame.transform.scale(actual_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        screen.blit(actual_surface, (0,0))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+    
+    pygame.quit() 
+
+
+
+
+# === .\snapshot_project.py ===
+
+"""
+snapshot_project.py
+-------------------
+Genere un fichier texte unique contenant tous les fichiers Python du projet.
+A placer a la racine du projet et a lancer depuis le terminal :
+    python snapshot_project.py
+
+Le fichier snapshot.txt genere peut ensuite etre uploade dans Claude (claude.ai).
+"""
+
+import os
+from datetime import datetime
+
+# --- Configuration ---
+EXTENSIONS = [".py"]                 # Extensions a inclure
+EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "env", "venv", ".vscode"}
+OUTPUT_FILE = "snapshot.txt"
+ROOT = "."                            # Racine du projet (dossier courant)
+# ---------------------
+
+def generate_snapshot():
+    files_found = []
+
+    for root, dirs, files in os.walk(ROOT):
+        # Exclure les dossiers inutiles
+        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+
+        for file in sorted(files):
+            if any(file.endswith(ext) for ext in EXTENSIONS):
+                filepath = os.path.join(root, file)
+                files_found.append(filepath)
+
+    if not files_found:
+        print("Aucun fichier trouve.")
+        return
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
+        out.write(f"# SNAPSHOT DU PROJET\n")
+        out.write(f"# Genere le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        out.write(f"# Fichiers inclus : {len(files_found)}\n")
+        out.write(f"# Extensions : {', '.join(EXTENSIONS)}\n")
+        out.write("\n" + "="*60 + "\n")
+
+        for filepath in files_found:
+            out.write(f"\n\n# === {filepath} ===\n\n")
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    out.write(f.read())
+            except Exception as e:
+                out.write(f"[Erreur de lecture : {e}]\n")
+
+    print(f"Snapshot genere : {OUTPUT_FILE}")
+    print(f"{len(files_found)} fichiers inclus :")
+    for f in files_found:
+        print(f"  {f}")
+
+if __name__ == "__main__":
+    generate_snapshot()
+
+# === .\core\__init__.py ===
+
+
+
+# === .\core\ant.py ===
+
+from config import *
+import numpy as np
+from core.pheromone_grid import PheromoneGrid
+
+class Ant : 
+
+    def __init__(self, x, y, grids, angle_antenna, length_antenna ) :
+
+        self.x = x
+        self.y = y 
+        self.has_food = False 
+        self.is_home = True 
+        self.pheromone_grid = grids
+        self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
+        self.angle_antenna = angle_antenna
+        self.length_antenna = length_antenna  # longueur de l'antenne en cases
+
+    def move(self,delta_theta,  put_pheromones, value_pheromone) : 
+        self.direction += delta_theta
+        new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
+        new_y = self.y + np.sin(self.direction)
+        
+        # on verifie que les valeurs ne sortent pas de smurs 
+        x_clipped = np.clip(new_x, 0, GRID_WIDTH-1)
+        y_clipped = np.clip(new_y, 0, GRID_HEIGHT-1)
+        
+        if x_clipped != new_x : 
+            # si on sort de la grille on rebondit en inversant la direction 
+            self.direction = np.pi - self.direction # on choisit une nouvelle direction aleatoire pour eviter de rester coincé au bord
+        if y_clipped != new_y : 
+            self.direction = -self.direction
+
+        if put_pheromones : 
+            if self.has_food : 
+                self.pheromone_grid.add_pheromones(PheromoneGrid.FOOD, int(self.x), int(self.y), value_pheromone)
+            else : 
+                self.pheromone_grid.add_pheromones(PheromoneGrid.HOME, int(self.x), int(self.y), value_pheromone)
+
+        self.x = x_clipped
+        self.y = y_clipped 
+
+    
+    def get_antenna_pos(self) : 
+        return [(self.x + self.length_antenna*np.cos(self.direction + self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction + self.angle_antenna)), (self.x + self.length_antenna*np.cos(self.direction - self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
+
+
+
+
+
+
+# === .\core\environment.py ===
+
+from core.pheromone_grid import PheromoneGrid
+from config import *
+import numpy as np
+from core.nest import Nest
+
+
+class Environment : 
+
+    def __init__(self, pheromone_grids, nest) : 
+        self.pheromone_grids = pheromone_grids
+        self.nest = nest
+
+
+    def get_x_y(self) : 
+        return self.nest.get_x_y()
+    
+    def update_environnement(self) : 
+        self.pheromone_grids.update_pheromone()
+
+    def get_pheromone_surface(self) : 
+        rh, gh, bh = COLOR_HOME
+        rf, gf, bf = COLOR_FOOD
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        home = self.pheromone_grids.get_pheromone_type(PheromoneGrid.HOME)
+        food = self.pheromone_grids.get_pheromone_type(PheromoneGrid.FOOD)
+
+        home_stronger = home > food
+
+        red_array = np.where(home_stronger, home*rh, food*rf)
+        green_array = np.where(home_stronger, home*gh, food*gf)
+        blue_array = np.where(home_stronger, home*bh, food*bf)
+        rgb[:, :, 0] = red_array
+        rgb[:, :, 1] = green_array
+        rgb[:, :, 2] = blue_array
+        return rgb.astype(np.uint8)
+    
+    def get_nest_surface(self) : 
+        surface = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+        x, y = self.nest.get_x_y()
+        dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]
+        mask = dx**2 + dy**2 <= NEST_RADIUS**2
+        surface[y-NEST_RADIUS:y+NEST_RADIUS+1, x-NEST_RADIUS:x+NEST_RADIUS+1][mask] = COLOR_NEST
+        return surface.astype(np.uint8)    
+
+
+
+
+# === .\core\nest.py ===
+
+from config import * 
+
+
+class Nest: 
+
+    def __init__(self, x, y) :
+        if x < NEST_RADIUS or x >= GRID_WIDTH - NEST_RADIUS or y < NEST_RADIUS or y >= GRID_HEIGHT - NEST_RADIUS : 
+            raise ValueError(f"Position ({x}, {y}) hors des limites de la grille ou trop proche du bord pour le nid")
+        self.x = x 
+        self.y = y 
+
+    def get_x_y(self) :
+        return self.x, self.y   
+
+# === .\core\pheromone_grid.py ===
+
+from config import * 
+import numpy as np
+from scipy.ndimage import gaussian_filter
+
+
+class PheromoneGrid : 
+
+    HOME = 0
+    FOOD = 1
+    def __init__(self) : 
+        # ici le 0 c'est le home ie retour et 1 c'est vers nouriture 
+        self.grids = np.zeros((2, GRID_HEIGHT, GRID_WIDTH))
+
+    def get_pheromone(self, type_of_pheromone, x, y) : 
+        if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
+            raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
+        return self.grids[type_of_pheromone, y, x]
+    
+    def get_pheromone_type(self, type_of_pheromone) : 
+        return self.grids[type_of_pheromone]
+    
+    def set_pheromone(self, type_of_pheromone, x, y, value) : 
+        if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
+            raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
+        self.grids[type_of_pheromone, y, x] = value
+
+    def update_pheromone(self) : 
+        # d'abord on considere l'evaporation des pheromones 
+        self.grids *= EVAPORATION_RATE
+
+        # ensuite on procede a la diffusion 
+        gaussian_filter(self.grids, # la matrice a transfo 
+                        sigma = DIFFUSION_SIGMA, # le rayonnement ie si grand ca s'etale bcp cf diffusion physique 
+                        order = 0, # pas de dérivé 
+                        output = self.grids, # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
+                        mode = 'constant', # ici on arrete le monde au bord sans rebond 
+                        cval = 0.0, # val a l'ext ici nul au dela de la limite  
+                        truncate = 7.0, 
+                        radius = None, # jsute calcul via sigma  
+                        axes = (1,2) # applique en 2D
+                        ) 
+
+        # si la valeur est trop faible on la met à 0 
+        self.grids[self.grids < 0.0001] = 0 
+
+    def add_pheromones(self, type_of_pheromone, x, y, value) :
+        if value < 0 or value > 1 :
+            raise ValueError(f"La valeur de phéromone doit etre comprise entre 0 et 1")
+        # on verif que la case est dans les limites de la grille 
+        if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
+            raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
+        self.grids[type_of_pheromone, y, x] = min(self.grids[type_of_pheromone, y, x] + value, 1)   
+
+
+
+
+
+# === .\tests\__init__.py ===
+
+
+
+# === .\tests\tests_pheromones.py ===
+
+import pygame 
+from config import *
+from core.pheromone_grid import PheromoneGrid
+
+def convert_scale(mx, my) : 
+
+    x_on_grid = int(mx * (GRID_WIDTH/WINDOW_WIDTH) )
+    y_on_grid = int(my * (GRID_HEIGHT/WINDOW_HEIGHT))
+    
+    return x_on_grid, y_on_grid
+
+
+def mouse_brush(pheromone_grids) : 
+
+    buttons = pygame.mouse.get_pressed()
+    if buttons[0] or buttons[2] :
+        mx , my = pygame.mouse.get_pos()
+        x_on_grid, y_on_grid = convert_scale(mx, my)
+
+        if 0 <= x_on_grid < GRID_WIDTH and 0 <= y_on_grid < GRID_HEIGHT:
+            if buttons[0] : # si clic gauche 
+                pheromone_grids.add_pheromones(PheromoneGrid.HOME, x_on_grid, y_on_grid, value = 1)
+            elif buttons[2] : # si clic droit 
+                pheromone_grids.add_pheromones(PheromoneGrid.FOOD, x_on_grid, y_on_grid, value = 1)
+        else : 
+            print("DEBUG : clic hors grille")
+
+# def mouse_action(event, pheromone_grids) : 
+    
+#     if event.type == pygame.MOUSEBUTTONDOWN : # si pression 
+#         mx, my = pygame.mouse.get_pos()
+#         x_on_grid, y_on_grid = convert_scale(mx, my)
+
+#         if event.button == 1 : # si clic gauche 
+#             print(f"DEBUG : clic gauche à mx = {mx}, my = {my}, x_on_grid = {x_on_grid}, y_on_grid = {y_on_grid}")
+#             if (0 <= x_on_grid < GRID_WIDTH and 0 <= y_on_grid < GRID_HEIGHT):
+#                 pheromone_grids.add_pheromones(PheromoneGrid.HOME, x_on_grid, y_on_grid, value = 1)
+#             else : 
+#                 print("DEBUG : clic gauche hors grille")
+
+
+#         elif event.button == 3 : # si clic droit 
+#             print(f"DEBUG : clic droit à mx = {mx}, my = {my}, x_on_grid = {x_on_grid}, y_on_grid = {y_on_grid}")
+#             if (0 <= x_on_grid < GRID_WIDTH and 0 <= y_on_grid < GRID_HEIGHT):
+#                 pheromone_grids.add_pheromones(PheromoneGrid.FOOD, x_on_grid, y_on_grid, value = 1)
+#             else : 
+#                 print("DEBUG : clic droit hors grille")
+        
+

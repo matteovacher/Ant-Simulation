@@ -20,7 +20,7 @@ if __name__ == "__main__" :
 
     running = True 
 
-    ants = [Ant(NEST_X, NEST_Y, pheromone_grids, ANGLE_ANTENNA) for i in range(N_ANTS)]
+    ants = [Ant(NEST_X, NEST_Y, pheromone_grids, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
 
     while running : 
 

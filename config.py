@@ -25,5 +25,13 @@ NEST_Y = 100    # coordonnees du nid
 # ant 
 LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
 ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
-N_ANTS = 10 
+N_ANTS = 20 
 COLOR_ANT = (255, 165, 0) # couloeur orange 
+
+# food 
+N_FOOD_TYPES = 2 
+COLOR_APHID = (255, 220, 0) # couleur jaune
+COLOR_SUGAR = (100, 200, 255) # bleu 
+RECHARGE_RATE_APHID = 0.01
+RECHARGE_RATE_SUGAR = 0
+

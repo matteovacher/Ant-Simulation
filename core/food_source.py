@@ -2,12 +2,18 @@ from config import *
 
 class FoodSource:
 
-    def __init__(self, type_food, x, y, quantity, recharge_rate=0.0):
+    APHID = 0 
+    SUGAR = 1
+
+    def __init__(self, type_food, x, y, quantity, recharge_rate):
         self.type_food = type_food
         self.x = x
         self.y = y
-        self.quantity = quantity
-        self.max_quantity = quantity
+        if quantity >= 0 and quantity <= 1:
+            self.quantity = quantity
+            self.max_quantity = 1
+        else : 
+            raise ValueError("Quantity must be between 0 and 1")
         self.recharge_rate = recharge_rate  # cases/pas de temps, 0 = pas de recharge
 
     def recharge(self):

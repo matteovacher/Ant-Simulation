@@ -60,14 +60,17 @@ Ant-Liquid-Brain-AI/
 |-- config.py                # Parametres globaux (constantes, jamais hardcodes)
 |-- core/
 |   |-- pheromone_grid.py    # Grille pheromones (2, H, W) : evaporation + diffusion
-|   |-- environment.py       # Agregat PheromoneGrid + Nest, surface de rendu
+|   |-- environment.py       # Agregat PheromoneGrid + Nest + FoodGrid, surface de rendu
 |   |-- nest.py              # Position du nid, validation des bornes
 |   |-- ant.py               # Agent fourmi : mouvement, depot pheromones, antennes
+|   |-- food_source.py       # Source de nourriture : type, position, quantite, recharge
+|   |-- food_grid.py         # Grille nourriture (N_FOOD_TYPES, H, W) + liste FoodSource
 |-- context/
 |   |-- master_prompt.md     # Contexte du projet (source de verite)
 |   |-- research_notes.md    # Notes scientifiques
 |-- tests/
 |   |-- tests_pheromones.py  # Test interactif souris : depot HOME/FOOD, rendu pygame
+|   |-- tests_food           # Test interactif souris : depot APHID/SUGAR, rendu pygame
 |-- requirements.txt         # Bibliotheques du projet
 
 Note : l'arborescence sera mise a jour uniquement quand un fichier
@@ -160,14 +163,48 @@ python tests/tests_pheromones.py
 - Les fourmis disparaissent visuellement dans le nid (nid dessine par-dessus)
 - env_surface[int(ant.y), int(ant.x)] = COLOR_ANT
 
-## 11. Etat d'Avancement
+## 11. Decisions Techniques Validees (Etape 2 - suite : Nourriture)
+
+### Sources de nourriture (FoodSource)
+- Deux types : APHID = 0 (pucerons, en bancs, se rechargent), SUGAR = 1 (ponctuel, recharge_rate=0.0)
+- Quantite normalisee dans ]0, 1] (raise ValueError sinon) -> mapping direct vers intensite RGB
+- recharge() : quantity = min(quantity + recharge_rate, 1.0)
+- consume(amount) : retourne ce qui a vraiment ete pris (min(quantity, amount))
+- max_quantity = 1 systematiquement
+
+### Grille nourriture (FoodGrid)
+- Structure : np.zeros((N_FOOD_TYPES, GRID_HEIGHT, GRID_WIDTH))
+- _build_grid() : remplit la grille depuis la liste de FoodSource
+- update() : recharge() chaque source + met a jour la case correspondante
+- get_food_surface() : logique dominante aphid/sugar -> RGB, intensite proportionnelle a quantity
+- Rendu : COLOR_APHID = (255, 220, 0), COLOR_SUGAR = (100, 200, 255)
+
+### Integration dans Environment
+- Environment devient agregat de PheromoneGrid + Nest + FoodGrid
+- update_environnement() appelle food_grid.update()
+- get_food_surface() delegue a food_grid.get_food_surface()
+
+### Depot interactif (tests/tests_food, implemente)
+- Clic gauche souris : poser une source APHID a la position du curseur
+- Clic droit souris  : poser une source SUGAR a la position du curseur
+- Les pucerons ont un recharge_rate > 0, le sucre a recharge_rate = 0.0
+- Integration dans main.py : en cours (passer food_grid a mouse_brush, afficher get_food_surface)
+
+### Config ajoutee
+- N_FOOD_TYPES = 2
+- COLOR_APHID = (255, 220, 0)
+- COLOR_SUGAR = (100, 200, 255)
+
+## 12. Etat d'Avancement
 - [x] Etape 0 : Environnement & bibliotheques
 - [x] Etape 1 : Grille & pheromones
-- [-] Etape 2 : Agent Fourmi (comportement de base)
+- [x] Etape 2a : Agent Fourmi (ant.py : mouvement, rebond, depot pheromones, antennes)
+- [-] Etape 2b : Nourriture (FoodSource + FoodGrid + tests_food implementes,
+                 integration Environment + rendu main.py en cours)
 - [ ] Etape 3 : Colonie & emergence
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
 
-## 12. Communication & Documentation
+## 13. Communication & Documentation
 Site web personnel : matteovacher.github.io (Hugo)
 -> Apres chaque etape validee, proposer un resume brut
    que Matteo reformulera avant publication
@@ -178,7 +215,7 @@ Site web personnel : matteovacher.github.io (Hugo)
 Articles publies :
 - Etape 1 : "Step 1 of Ant Simulation Project : Pheromones"
 
-## 13. Profil Developpeur
+## 14. Profil Developpeur
 Formation   : Supaero 2e annee (M1), apres MPSI/PSI* (Saint-Louis)
 Niveau      : Bon en algorithmique et mathematiques
 Langages    : Java (POO maitrisee), Python (algorithmique uniquement en prepa,

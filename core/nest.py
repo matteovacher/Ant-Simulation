@@ -8,6 +8,7 @@ class Nest:
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille ou trop proche du bord pour le nid")
         self.x = x 
         self.y = y 
+        self.food_collected = 0 
 
     def get_x_y(self) :
         return self.x, self.y   

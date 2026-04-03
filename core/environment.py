@@ -2,13 +2,14 @@ from core.pheromone_grid import PheromoneGrid
 from config import *
 import numpy as np
 from core.nest import Nest
-
+from core.food_grid import FoodGrid
 
 class Environment : 
 
-    def __init__(self, pheromone_grids, nest) : 
+    def __init__(self, pheromone_grids, nest, food_grid) : 
         self.pheromone_grids = pheromone_grids
         self.nest = nest
+        self.food_grid = food_grid
 
 
     def get_x_y(self) : 
@@ -16,6 +17,7 @@ class Environment :
     
     def update_environnement(self) : 
         self.pheromone_grids.update_pheromone()
+        self.food_grid.update()
 
     def get_pheromone_surface(self) : 
         rh, gh, bh = COLOR_HOME
@@ -41,6 +43,9 @@ class Environment :
         dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]
         mask = dx**2 + dy**2 <= NEST_RADIUS**2
         surface[y-NEST_RADIUS:y+NEST_RADIUS+1, x-NEST_RADIUS:x+NEST_RADIUS+1][mask] = COLOR_NEST
-        return surface.astype(np.uint8)    
+        return surface.astype(np.uint8)  
+
+    def get_food_surface(self) :
+        return self.food_grid.get_food_surface()  
 
 

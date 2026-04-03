@@ -1,6 +1,6 @@
 # SNAPSHOT DU PROJET
-# Genere le : 2026-04-02 23:06:13
-# Fichiers inclus : 10
+# Genere le : 2026-04-03 18:34:28
+# Fichiers inclus : 13
 # Extensions : .py
 
 ============================================================
@@ -35,18 +35,28 @@ NEST_Y = 100    # coordonnees du nid
 # ant 
 LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
 ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
-N_ANTS = 10 
+N_ANTS = 20 
 COLOR_ANT = (255, 165, 0) # couloeur orange 
+
+# food 
+N_FOOD_TYPES = 2 
+COLOR_APHID = (255, 220, 0) # couleur jaune
+COLOR_SUGAR = (100, 200, 255) # bleu 
+RECHARGE_RATE_APHID = 0.01
+RECHARGE_RATE_SUGAR = 0
+
 
 
 # === .\main.py ===
 
 from core.environment import Environment
+from core.food_grid import FoodGrid
 from core.pheromone_grid import PheromoneGrid
+from core.food_source import FoodSource
 from config import *
 import pygame
 import numpy as np 
-import tests.tests_pheromones as tp 
+import tests.tests_food as tf 
 from core.nest import Nest
 from core.ant import Ant 
 
@@ -59,11 +69,13 @@ if __name__ == "__main__" :
 
     pheromone_grids = PheromoneGrid()
     nest = Nest(NEST_X, NEST_Y)
-    env = Environment(pheromone_grids, nest) # emplacement du nid au milieu
+    food_grid = FoodGrid([])
 
     running = True 
 
-    ants = [Ant(NEST_X, NEST_Y, pheromone_grids, ANGLE_ANTENNA) for i in range(N_ANTS)]
+    ants = [Ant(NEST_X, NEST_Y, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
+
+    env = Environment(pheromone_grids, nest, food_grid, ants) # emplacement du nid au milieu
 
     while running : 
 
@@ -71,24 +83,11 @@ if __name__ == "__main__" :
             if event.type == pygame.QUIT : 
                 running = False
             
-        tp.mouse_brush(pheromone_grids)
+        tf.mouse_brush(food_grid)
         
         screen.fill("black")
 
-        env.update_environnement()
-
-        env_surface = env.get_pheromone_surface()
-
-        for ant in ants : 
-            delta_theta = np.random.uniform(-np.pi/6, np.pi/6) # on ajoute un peu de bruit pour eviter les comportements trop deterministes
-            ant.move(delta_theta, put_pheromones = True, value_pheromone = 0.7)
-
-            env_surface[int(ant.y), int(ant.x)] = COLOR_ANT # on affiche les fourmis en blanc
-
-        env_nest = env.get_nest_surface()
-        nest_mask = np.any(env_nest != 0, axis = 2)
-
-        env_surface[nest_mask] = env_nest[nest_mask]
+        env_surface = env.step()
 
         actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
 
@@ -170,24 +169,23 @@ if __name__ == "__main__":
 
 # === .\core\ant.py ===
 
+from sympy import true
+
 from config import *
 import numpy as np
-from core.pheromone_grid import PheromoneGrid
 
 class Ant : 
 
-    def __init__(self, x, y, grids, angle_antenna, length_antenna ) :
+    def __init__(self, x, y, angle_antenna, length_antenna ) :
 
         self.x = x
         self.y = y 
         self.has_food = False 
-        self.is_home = True 
-        self.pheromone_grid = grids
         self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
         self.angle_antenna = angle_antenna
         self.length_antenna = length_antenna  # longueur de l'antenne en cases
 
-    def move(self,delta_theta,  put_pheromones, value_pheromone) : 
+    def move(self,delta_theta) : 
         self.direction += delta_theta
         new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
         new_y = self.y + np.sin(self.direction)
@@ -202,20 +200,36 @@ class Ant :
         if y_clipped != new_y : 
             self.direction = -self.direction
 
-        if put_pheromones : 
-            if self.has_food : 
-                self.pheromone_grid.add_pheromones(PheromoneGrid.FOOD, int(self.x), int(self.y), value_pheromone)
-            else : 
-                self.pheromone_grid.add_pheromones(PheromoneGrid.HOME, int(self.x), int(self.y), value_pheromone)
-
-        self.x = x_clipped
+        old_x, old_y = int(self.x), int(self.y)
+    
+        self.x = x_clipped 
         self.y = y_clipped 
+
+        return old_x, old_y
 
     
     def get_antenna_pos(self) : 
         return [(self.x + self.length_antenna*np.cos(self.direction + self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction + self.angle_antenna)), (self.x + self.length_antenna*np.cos(self.direction - self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
 
+    def is_at_nest(self, nest) :
+        x_nest, y_nest = nest.get_x_y()
+        return (self.x - x_nest)**2 + (self.y - y_nest)**2 <= NEST_RADIUS**2 
 
+    def interact(self, source, at_nest) :
+        if (not self.has_food) and source is not None and source.quantity > 0 :
+            self.has_food = True 
+            source.consume(1) # on prend ici 1 unité de nouriture 
+
+        elif self.has_food and at_nest :
+            self.has_food = False 
+            return True 
+        return False 
+    
+    
+
+        
+
+ 
 
 
 
@@ -226,20 +240,49 @@ from core.pheromone_grid import PheromoneGrid
 from config import *
 import numpy as np
 from core.nest import Nest
-
+from core.food_grid import FoodGrid
+from core.ant import Ant 
 
 class Environment : 
 
-    def __init__(self, pheromone_grids, nest) : 
+    def __init__(self, pheromone_grids, nest, food_grid, ants) : 
         self.pheromone_grids = pheromone_grids
         self.nest = nest
+        self.food_grid = food_grid
+        self.ants = ants 
 
 
     def get_x_y(self) : 
         return self.nest.get_x_y()
     
-    def update_environnement(self) : 
+    def update_environment(self) : 
         self.pheromone_grids.update_pheromone()
+        self.food_grid.update()
+
+    def step(self) : 
+        self.update_environment()
+
+        env_surface = self.get_pheromone_surface() 
+
+        env_food = self.get_food_surface()
+        food_mask = np.any(env_food != 0, axis = 2)
+        env_surface[food_mask] = env_food[food_mask]
+
+        for ant in self.ants : 
+            delta_theta = np.random.uniform(-np.pi/6, np.pi/6) # on ajoute un peu de bruit pour eviter les comportements trop deterministes
+            ant.move(delta_theta)
+            ant.interact(self.food_grid, self.nest)
+
+            env_surface[int(ant.y), int(ant.x)] = COLOR_ANT # on affiche les fourmis en orange 
+
+        env_nest = self.get_nest_surface()
+        nest_mask = np.any(env_nest != 0, axis = 2)
+        env_surface[nest_mask] = env_nest[nest_mask] 
+
+        return env_surface    
+
+
+
 
     def get_pheromone_surface(self) : 
         rh, gh, bh = COLOR_HOME
@@ -265,9 +308,98 @@ class Environment :
         dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]
         mask = dx**2 + dy**2 <= NEST_RADIUS**2
         surface[y-NEST_RADIUS:y+NEST_RADIUS+1, x-NEST_RADIUS:x+NEST_RADIUS+1][mask] = COLOR_NEST
-        return surface.astype(np.uint8)    
+        return surface.astype(np.uint8)  
+
+    def get_food_surface(self) :
+        return self.food_grid.get_food_surface()  
 
 
+
+
+# === .\core\food_grid.py ===
+
+from config import *
+import numpy as np
+from core.food_source import FoodSource
+
+class FoodGrid:
+
+    def __init__(self, food_sources):
+        self.sources = food_sources
+        self.grid = np.zeros((N_FOOD_TYPES, GRID_HEIGHT, GRID_WIDTH))
+        self.source_map = {}
+        self._build_grid()
+
+    def _build_grid(self):
+        for source in self.sources : 
+            self.grid[source.type_food, source.y, source.x] = source.quantity
+            self.source_map[(source.x, source.y)] = source
+
+    def add_source(self, source) : 
+        self.sources.append(source)
+        self.grid[source.type_food, source.y, source.x] = source.quantity
+        self.source_map[(source.x, source.y)] = source
+
+    def update(self):
+        for source in self.sources : 
+            source.recharge()
+            self.grid[source.type_food, source.y, source.x] = source.quantity
+
+    def get_food_surface(self):
+        ra, ga, ba = COLOR_APHID
+        rs, gs, bs = COLOR_SUGAR
+
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        aphid = self.grid[FoodSource.APHID]
+        sugar = self.grid[FoodSource.SUGAR]
+
+        aphid_stronger = aphid > sugar
+
+        red_array = np.where(aphid_stronger, aphid*ra, sugar*rs)
+        green_array = np.where(aphid_stronger, aphid*ga, sugar*gs)
+        blue_array = np.where(aphid_stronger, aphid*ba, sugar*bs)
+
+        rgb[:, :, 0] = red_array
+        rgb[:, :, 1] = green_array
+        rgb[:, :, 2] = blue_array
+
+        return rgb.astype(np.uint8) 
+
+    def get_source(self, x, y) : 
+        return self.source_map.get((x, y), None)
+
+
+
+
+
+# === .\core\food_source.py ===
+
+from config import *
+
+class FoodSource:
+
+    APHID = 0 
+    SUGAR = 1
+
+    def __init__(self, type_food, x, y, quantity, recharge_rate):
+        self.type_food = type_food
+        self.x = x
+        self.y = y
+        if quantity >= 0 and quantity <= 1:
+            self.quantity = quantity
+            self.max_quantity = 1
+        else : 
+            raise ValueError("Quantity must be between 0 and 1")
+        self.recharge_rate = recharge_rate  # cases/pas de temps, 0 = pas de recharge
+
+    def recharge(self):
+        self.quantity = min(self.quantity + self.recharge_rate, self.max_quantity)
+
+    def consume(self, amount):
+        taken = min(self.quantity, amount)
+        self.quantity -= taken
+        return taken  # retourne ce qui a vraiment ete pris pas plus 
 
 
 # === .\core\nest.py ===
@@ -282,6 +414,7 @@ class Nest:
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille ou trop proche du bord pour le nid")
         self.x = x 
         self.y = y 
+        self.food_collected = 0 
 
     def get_x_y(self) :
         return self.x, self.y   
@@ -348,6 +481,41 @@ class PheromoneGrid :
 # === .\tests\__init__.py ===
 
 
+
+# === .\tests\tests_food.py ===
+
+import pygame 
+from config import *
+from core.food_grid import FoodGrid  
+from core.food_source import FoodSource
+
+def convert_scale(mx, my) : 
+
+    x_on_grid = int(mx * (GRID_WIDTH/WINDOW_WIDTH) )
+    y_on_grid = int(my * (GRID_HEIGHT/WINDOW_HEIGHT))
+    
+    return x_on_grid, y_on_grid
+
+def mouse_brush(food_grid) :
+    buttons = pygame.mouse.get_pressed()
+    if buttons[0] : 
+        mx, my = pygame.mouse.get_pos()
+        x_on_grid, y_on_grid = convert_scale(mx, my)
+        if food_grid.get_source(x_on_grid, y_on_grid) is not None :
+            print("DEBUG : source de nourriture déjà présente à cet emplacement")
+        elif 0 <= x_on_grid < GRID_WIDTH and 0 <= y_on_grid < GRID_HEIGHT :
+            food_grid.add_source(FoodSource(FoodSource.APHID, x_on_grid, y_on_grid, quantity = 1, recharge_rate = RECHARGE_RATE_APHID))
+        else : 
+            print("DEBUG : clic hors grille")
+    elif buttons[2] : 
+        mx, my = pygame.mouse.get_pos()
+        x_on_grid, y_on_grid = convert_scale(mx, my)
+        if food_grid.get_source(x_on_grid, y_on_grid) is not None :
+            print("DEBUG : source de nourriture déjà présente à cet emplacement")
+        elif 0 <= x_on_grid < GRID_WIDTH and 0 <= y_on_grid < GRID_HEIGHT :
+            food_grid.add_source(FoodSource(FoodSource.SUGAR, x_on_grid, y_on_grid, quantity = 1, recharge_rate = RECHARGE_RATE_SUGAR))
+        else : 
+            print("DEBUG : clic hors grille")
 
 # === .\tests\tests_pheromones.py ===
 

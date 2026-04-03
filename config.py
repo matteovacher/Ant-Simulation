@@ -10,7 +10,7 @@ CELL_SIZE = 3           # taille de la case en pixels
 FPS = 24                # images par seconde
 WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE       # largeur de la fenetre = width*cellsize (2880 pixels max )
 WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE     # hauteur de la fenetre = height*cellsize (1920 pixels max )
-
+PHEROMONE_DEPOSIT = 0.7 
 
 # env
 #  

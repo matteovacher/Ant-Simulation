@@ -1,4 +1,5 @@
-from core.environment import Environment
+from core.environment_bis import Environment 
+from core.renderer import Renderer 
 from core.food_grid import FoodGrid
 from core.pheromone_grid import PheromoneGrid
 from core.food_source import FoodSource
@@ -18,13 +19,14 @@ if __name__ == "__main__" :
 
     pheromone_grids = PheromoneGrid()
     nest = Nest(NEST_X, NEST_Y)
-    food_sources = []
-    food_grid = FoodGrid(food_sources)
-    env = Environment(pheromone_grids, nest, food_grid) # emplacement du nid au milieu
+    food_grid = FoodGrid([])
 
     running = True 
 
-    ants = [Ant(NEST_X, NEST_Y, pheromone_grids, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
+    ants = [Ant(NEST_X, NEST_Y, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
+
+    env = Environment(pheromone_grids, nest, food_grid, ants) # emplacement du nid au milieu
+    renderer = Renderer()
 
     while running : 
 
@@ -32,28 +34,12 @@ if __name__ == "__main__" :
             if event.type == pygame.QUIT : 
                 running = False
             
-        tf.mouse_brush(food_sources)
+        tf.mouse_brush(food_grid)
         
         screen.fill("black")
 
-        env.update_environnement()
-
-        env_surface = env.get_pheromone_surface()
-
-        env_food = env.get_food_surface()
-        food_mask = np.any(env_food != 0, axis = 2)
-        env_surface[food_mask] = env_food[food_mask]
-
-        for ant in ants : 
-            delta_theta = np.random.uniform(-np.pi/6, np.pi/6) # on ajoute un peu de bruit pour eviter les comportements trop deterministes
-            ant.move(delta_theta, put_pheromones = True, value_pheromone = 0.7)
-            ant.interact(env.food_grid, env.nest)
-
-            env_surface[int(ant.y), int(ant.x)] = COLOR_ANT # on affiche les fourmis en blanc
-
-        env_nest = env.get_nest_surface()
-        nest_mask = np.any(env_nest != 0, axis = 2)
-        env_surface[nest_mask] = env_nest[nest_mask]
+        env.step()
+        env_surface = renderer.render(env)
 
         actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
 

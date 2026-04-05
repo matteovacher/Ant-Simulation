@@ -1,6 +1,6 @@
 # SNAPSHOT DU PROJET
-# Genere le : 2026-04-03 18:34:28
-# Fichiers inclus : 13
+# Genere le : 2026-04-05 22:26:08
+# Fichiers inclus : 15
 # Extensions : .py
 
 ============================================================
@@ -12,7 +12,7 @@ import numpy as np
 
 # grille et pheromones 
 
-EVAPORATION_RATE = 0.999   # entre 0 et 1 on def une suite geo 
+EVAPORATION_RATE = 0.997   # entre 0 et 1 on def une suite geo 
 GRID_WIDTH = 360     # largeur de la grille en case 
 GRID_HEIGHT = 240       # hauteur de la grille aussi en case 
 DIFFUSION_SIGMA = 0.3    # pour la diffusion des pheromones et scipy 
@@ -20,7 +20,7 @@ CELL_SIZE = 3           # taille de la case en pixels
 FPS = 24                # images par seconde
 WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE       # largeur de la fenetre = width*cellsize (2880 pixels max )
 WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE     # hauteur de la fenetre = height*cellsize (1920 pixels max )
-
+PHEROMONE_DEPOSIT = 0.7 
 
 # env
 #  
@@ -37,6 +37,13 @@ LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
 ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
 N_ANTS = 20 
 COLOR_ANT = (255, 165, 0) # couloeur orange 
+MAX_FOOD_CARRIED = 0.5 
+FOOD_COLLECT_AMOUNT = 0.5 
+EAT_DURATION = 8
+ANTENNA_WEIGHT = np.pi/3
+TRESHOLD_FOOD = 0.45
+RANDOM_DIR = np.pi/8
+
 
 # food 
 N_FOOD_TYPES = 2 
@@ -49,7 +56,8 @@ RECHARGE_RATE_SUGAR = 0
 
 # === .\main.py ===
 
-from core.environment import Environment
+from core.environment_bis import Environment 
+from core.renderer import Renderer 
 from core.food_grid import FoodGrid
 from core.pheromone_grid import PheromoneGrid
 from core.food_source import FoodSource
@@ -76,6 +84,9 @@ if __name__ == "__main__" :
     ants = [Ant(NEST_X, NEST_Y, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
 
     env = Environment(pheromone_grids, nest, food_grid, ants) # emplacement du nid au milieu
+    renderer = Renderer()
+
+    font = pygame.font.SysFont("monospace", 20)
 
     while running : 
 
@@ -87,12 +98,17 @@ if __name__ == "__main__" :
         
         screen.fill("black")
 
-        env_surface = env.step()
+        env.step()
+        env_surface = renderer.render(env)
 
         actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
 
         actual_surface = pygame.transform.scale(actual_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
         screen.blit(actual_surface, (0,0))
+
+        text = font.render(f"Food collected : {env.nest.food_collected:.2f}", True, (255, 255, 255))
+
+        screen.blit(text, (10, 10))
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -169,8 +185,6 @@ if __name__ == "__main__":
 
 # === .\core\ant.py ===
 
-from sympy import true
-
 from config import *
 import numpy as np
 
@@ -180,12 +194,16 @@ class Ant :
 
         self.x = x
         self.y = y 
-        self.has_food = False 
+        self.food_carried = 0
+        self.eating_timer = 0 
         self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
         self.angle_antenna = angle_antenna
         self.length_antenna = length_antenna  # longueur de l'antenne en cases
 
     def move(self,delta_theta) : 
+        if self.eating_timer > 0 : 
+            self.eating_timer -= 1
+            return int(self.x), int(self.y) # bouge pas tant que on mange 
         self.direction += delta_theta
         new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
         new_y = self.y + np.sin(self.direction)
@@ -216,14 +234,19 @@ class Ant :
         return (self.x - x_nest)**2 + (self.y - y_nest)**2 <= NEST_RADIUS**2 
 
     def interact(self, source, at_nest) :
-        if (not self.has_food) and source is not None and source.quantity > 0 :
-            self.has_food = True 
-            source.consume(1) # on prend ici 1 unité de nouriture 
+        if source is not None and self.food_carried < MAX_FOOD_CARRIED : 
+            # on ramasse de la nourriture si on en trouve et qu'on peut en porter plus 
+            want_to_collect = min(FOOD_COLLECT_AMOUNT, MAX_FOOD_CARRIED - self.food_carried)
+            taken = source.consume(want_to_collect)
+            self.food_carried += taken
+            if taken > 0 :
+                self.eating_timer = EAT_DURATION # on doit attendre un peu avant de pouvoir bouger ou interagir à nouveau 
 
-        elif self.has_food and at_nest :
-            self.has_food = False 
-            return True 
-        return False 
+        elif self.food_carried > 0 and at_nest :
+            deposited = self.food_carried
+            self.food_carried = 0 
+            return deposited 
+        return 0.0
     
     
 
@@ -270,8 +293,14 @@ class Environment :
 
         for ant in self.ants : 
             delta_theta = np.random.uniform(-np.pi/6, np.pi/6) # on ajoute un peu de bruit pour eviter les comportements trop deterministes
-            ant.move(delta_theta)
-            ant.interact(self.food_grid, self.nest)
+            old_x, old_y = ant.move(delta_theta)
+            p_type = PheromoneGrid.FOOD if ant.has_food else PheromoneGrid.HOME
+            self.pheromone_grids.add_pheromones(p_type, old_x, old_y, PHEROMONE_DEPOSIT)
+
+            source = self.food_grid.get_source(int(ant.x), int(ant.y))
+            deposited = ant.interact(source, ant.is_at_nest(self.nest))
+            if deposited : 
+                self.nest.food_collected += 1
 
             env_surface[int(ant.y), int(ant.x)] = COLOR_ANT # on affiche les fourmis en orange 
 
@@ -316,6 +345,44 @@ class Environment :
 
 
 
+# === .\core\environment_bis.py ===
+
+from core.pheromone_grid import PheromoneGrid
+from config import *
+import numpy as np
+
+
+class Environment:
+
+    def __init__(self, pheromone_grids, nest, food_grid, ants):
+        self.pheromone_grids = pheromone_grids
+        self.nest = nest
+        self.food_grid = food_grid
+        self.ants = ants
+
+    def get_x_y(self):
+        return self.nest.get_x_y()
+
+    def update_environment(self):
+        self.pheromone_grids.update_pheromone()
+        self.food_grid.update()
+
+    def step(self):
+        
+        self.update_environment()
+
+        for ant in self.ants:
+            delta_theta = np.random.uniform(-RANDOM_DIR, RANDOM_DIR)
+            old_x, old_y = ant.move(delta_theta)
+            p_type = PheromoneGrid.FOOD if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.HOME
+            self.pheromone_grids.add_pheromones(p_type, old_x, old_y, PHEROMONE_DEPOSIT)
+
+            source = self.food_grid.get_source(int(ant.x), int(ant.y))
+            deposited = ant.interact(source, ant.is_at_nest(self.nest))
+            if deposited > 0:
+                self.nest.food_collected += deposited
+
+
 # === .\core\food_grid.py ===
 
 from config import *
@@ -344,27 +411,6 @@ class FoodGrid:
         for source in self.sources : 
             source.recharge()
             self.grid[source.type_food, source.y, source.x] = source.quantity
-
-    def get_food_surface(self):
-        ra, ga, ba = COLOR_APHID
-        rs, gs, bs = COLOR_SUGAR
-
-        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
-
-        aphid = self.grid[FoodSource.APHID]
-        sugar = self.grid[FoodSource.SUGAR]
-
-        aphid_stronger = aphid > sugar
-
-        red_array = np.where(aphid_stronger, aphid*ra, sugar*rs)
-        green_array = np.where(aphid_stronger, aphid*ga, sugar*gs)
-        blue_array = np.where(aphid_stronger, aphid*ba, sugar*bs)
-
-        rgb[:, :, 0] = red_array
-        rgb[:, :, 1] = green_array
-        rgb[:, :, 2] = blue_array
-
-        return rgb.astype(np.uint8) 
 
     def get_source(self, x, y) : 
         return self.source_map.get((x, y), None)
@@ -475,6 +521,72 @@ class PheromoneGrid :
         self.grids[type_of_pheromone, y, x] = min(self.grids[type_of_pheromone, y, x] + value, 1)   
 
 
+
+
+
+# === .\core\renderer.py ===
+
+from core.pheromone_grid import PheromoneGrid
+from config import *
+import numpy as np
+from core.food_source import FoodSource
+
+
+class Renderer:
+
+    def render(self, env):
+        surface = self._get_pheromone_surface(env.pheromone_grids)
+
+        food_surface = self._get_food_surface(env.food_grid)
+        food_mask = np.any(food_surface != 0, axis=2)
+        surface[food_mask] = food_surface[food_mask]
+
+        for ant in env.ants:
+            surface[int(ant.y), int(ant.x)] = COLOR_ANT
+
+        nest_surface = self._get_nest_surface(env.nest)
+        nest_mask = np.any(nest_surface != 0, axis=2)
+        surface[nest_mask] = nest_surface[nest_mask]
+
+        return surface
+
+    def _get_pheromone_surface(self, pheromone_grids):
+        rh, gh, bh = COLOR_HOME
+        rf, gf, bf = COLOR_FOOD
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        home = pheromone_grids.get_pheromone_type(PheromoneGrid.HOME)
+        food = pheromone_grids.get_pheromone_type(PheromoneGrid.FOOD)
+        home_stronger = home > food
+
+        rgb[:, :, 0] = np.where(home_stronger, home * rh, food * rf)
+        rgb[:, :, 1] = np.where(home_stronger, home * gh, food * gf)
+        rgb[:, :, 2] = np.where(home_stronger, home * bh, food * bf)
+
+        return rgb.astype(np.uint8)
+
+    def _get_food_surface(self, food_grid):
+        ra, ga, ba = COLOR_APHID
+        rs, gs, bs = COLOR_SUGAR
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        aphid = food_grid.grid[FoodSource.APHID]
+        sugar = food_grid.grid[FoodSource.SUGAR]
+        aphid_stronger = aphid > sugar
+
+        rgb[:, :, 0] = np.where(aphid_stronger, aphid * ra, sugar * rs)
+        rgb[:, :, 1] = np.where(aphid_stronger, aphid * ga, sugar * gs)
+        rgb[:, :, 2] = np.where(aphid_stronger, aphid * ba, sugar * bs)
+
+        return rgb.astype(np.uint8)
+
+    def _get_nest_surface(self, nest):
+        surface = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+        x, y = nest.get_x_y()
+        dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]
+        mask = dx**2 + dy**2 <= NEST_RADIUS**2
+        surface[y-NEST_RADIUS:y+NEST_RADIUS+1, x-NEST_RADIUS:x+NEST_RADIUS+1][mask] = COLOR_NEST
+        return surface.astype(np.uint8)
 
 
 

@@ -200,6 +200,12 @@ python tests/tests_pheromones.py
 - Les pucerons ont un recharge_rate > 0, le sucre a recharge_rate = 0.0
 - Integration dans main.py : terminee (mouse_brush(food_grid), env.step() + renderer.render(env))
 
+### Bugs corriges (Etape 2b)
+- eating_timer declenche meme si taken == 0 (source epuisee) : fourmi bloquee indefiniment
+  -> Fix : eating_timer = EAT_DURATION uniquement si taken > 0 (ant.py:interact)
+- RANDOM_DIR = np.pi/8j dans config.py : le suffixe j crée un complexe en Python
+  -> Fix : RANDOM_DIR = np.pi/8
+
 ### Config ajoutee
 - N_FOOD_TYPES = 2
 - COLOR_APHID = (255, 220, 0)
@@ -209,8 +215,8 @@ python tests/tests_pheromones.py
 - [x] Etape 0 : Environnement & bibliotheques
 - [x] Etape 1 : Grille & pheromones
 - [x] Etape 2a : Agent Fourmi (ant.py : mouvement, rebond, depot pheromones, antennes)
-- [-] Etape 2b : Nourriture (FoodSource + FoodGrid + tests_food implementes,
-                 integration Environment + rendu main.py en cours)
+- [x] Etape 2b : Nourriture (FoodSource + FoodGrid + tests_food + integration Environment
+                 + rendu main.py + compteur food_collected + bugs corriges)
 - [ ] Etape 3 : Colonie & emergence
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
 
@@ -224,6 +230,7 @@ Site web personnel : matteovacher.github.io (Hugo)
 
 Articles publies :
 - Etape 1 : "Step 1 of Ant Simulation Project : Pheromones"
+- Etape 2 : "Step 2 of Ant Simulation Project : Ant Agent" (brouillon nourriture redige, a publier)
 
 ## 14. Profil Developpeur
 Formation   : Supaero 2e annee (M1), apres MPSI/PSI* (Saint-Louis)

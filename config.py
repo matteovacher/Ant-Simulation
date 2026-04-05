@@ -23,7 +23,7 @@ NEST_X = 100    # coordonnees du nid
 NEST_Y = 100    # coordonnees du nid
 
 # ant 
-LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
+LENGTH_ANTENNA = 1 # longueur de l'antenne en cases
 ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
 N_ANTS = 20 
 COLOR_ANT = (255, 165, 0) # couloeur orange 

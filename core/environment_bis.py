@@ -19,15 +19,16 @@ class Environment:
         self.food_grid.update()
 
     def step(self):
+        
         self.update_environment()
 
         for ant in self.ants:
-            delta_theta = np.random.uniform(-np.pi/6, np.pi/6)
+            delta_theta = np.random.uniform(-RANDOM_DIR, RANDOM_DIR)
             old_x, old_y = ant.move(delta_theta)
-            p_type = PheromoneGrid.FOOD if ant.has_food else PheromoneGrid.HOME
+            p_type = PheromoneGrid.FOOD if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.HOME
             self.pheromone_grids.add_pheromones(p_type, old_x, old_y, PHEROMONE_DEPOSIT)
 
             source = self.food_grid.get_source(int(ant.x), int(ant.y))
             deposited = ant.interact(source, ant.is_at_nest(self.nest))
-            if deposited:
-                self.nest.food_collected += 1
+            if deposited > 0:
+                self.nest.food_collected += deposited

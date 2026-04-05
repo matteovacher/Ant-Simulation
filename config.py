@@ -2,7 +2,7 @@ import numpy as np
 
 # grille et pheromones 
 
-EVAPORATION_RATE = 0.999   # entre 0 et 1 on def une suite geo 
+EVAPORATION_RATE = 0.997   # entre 0 et 1 on def une suite geo 
 GRID_WIDTH = 360     # largeur de la grille en case 
 GRID_HEIGHT = 240       # hauteur de la grille aussi en case 
 DIFFUSION_SIGMA = 0.3    # pour la diffusion des pheromones et scipy 
@@ -27,6 +27,13 @@ LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
 ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
 N_ANTS = 20 
 COLOR_ANT = (255, 165, 0) # couloeur orange 
+MAX_FOOD_CARRIED = 0.5 
+FOOD_COLLECT_AMOUNT = 0.5 
+EAT_DURATION = 8
+ANTENNA_WEIGHT = np.pi/3
+TRESHOLD_FOOD = 0.45
+RANDOM_DIR = np.pi/8
+
 
 # food 
 N_FOOD_TYPES = 2 

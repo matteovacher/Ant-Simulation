@@ -7,12 +7,16 @@ class Ant :
 
         self.x = x
         self.y = y 
-        self.has_food = False 
+        self.food_carried = 0
+        self.eating_timer = 0 
         self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
         self.angle_antenna = angle_antenna
         self.length_antenna = length_antenna  # longueur de l'antenne en cases
 
     def move(self,delta_theta) : 
+        if self.eating_timer > 0 : 
+            self.eating_timer -= 1
+            return int(self.x), int(self.y) # bouge pas tant que on mange 
         self.direction += delta_theta
         new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
         new_y = self.y + np.sin(self.direction)
@@ -43,14 +47,19 @@ class Ant :
         return (self.x - x_nest)**2 + (self.y - y_nest)**2 <= NEST_RADIUS**2 
 
     def interact(self, source, at_nest) :
-        if (not self.has_food) and source is not None and source.quantity > 0 :
-            self.has_food = True 
-            source.consume(1) # on prend ici 1 unité de nouriture 
+        if source is not None and self.food_carried < MAX_FOOD_CARRIED : 
+            # on ramasse de la nourriture si on en trouve et qu'on peut en porter plus 
+            want_to_collect = min(FOOD_COLLECT_AMOUNT, MAX_FOOD_CARRIED - self.food_carried)
+            taken = source.consume(want_to_collect)
+            self.food_carried += taken
+            if taken > 0 :
+                self.eating_timer = EAT_DURATION # on doit attendre un peu avant de pouvoir bouger ou interagir à nouveau 
 
-        elif self.has_food and at_nest :
-            self.has_food = False 
-            return True 
-        return False 
+        elif self.food_carried > 0 and at_nest :
+            deposited = self.food_carried
+            self.food_carried = 0 
+            return deposited 
+        return 0.0
     
     
 

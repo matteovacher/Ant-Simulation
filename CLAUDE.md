@@ -39,6 +39,14 @@ Reference scientifique cle :
   (choix de bibliotheque, architecture, parametres, contraintes machines...)
 - Proposer une mise a jour apres chaque etape cochee dans l'Etat d'Avancement
 
+### Regard critique systematique
+- A chaque relecture de fichier ou audit de code : signaler TOUS les problemes detectes,
+  meme mineurs (nommage, couplage, incoherence avec CLAUDE.md, bug latent, dette technique)
+- Ne jamais valider un code par defaut ou par politesse
+- Si une decision technique est sous-optimale, le dire explicitement avec la raison
+- Distinguer clairement : bug bloquant / comportement incorrect / dette technique / style
+- Ne pas attendre qu'un bug soit signale par l'utilisateur pour le mentionner
+
 ## 4. Contexte Materiel
 Appareil    : Microsoft Surface Pro 9
 Processeur  : Intel Core i5-1235U 12e gen (2.50 GHz, 10 coeurs)
@@ -60,7 +68,9 @@ Ant-Liquid-Brain-AI/
 |-- config.py                # Parametres globaux (constantes, jamais hardcodes)
 |-- core/
 |   |-- pheromone_grid.py    # Grille pheromones (2, H, W) : evaporation + diffusion
-|   |-- environment.py       # Agregat PheromoneGrid + Nest + FoodGrid, surface de rendu
+|   |-- environment.py       # [LEGACY] ancienne version : orchestration + rendu melanges, conserve pour reference
+|   |-- environment_bis.py   # Orchestrateur pur : step() sans rendu, remplace environment.py
+|   |-- renderer.py          # Rendu pur : construit la surface numpy depuis l'etat de l'environnement
 |   |-- nest.py              # Position du nid, validation des bornes
 |   |-- ant.py               # Agent fourmi : mouvement, depot pheromones, antennes
 |   |-- food_source.py       # Source de nourriture : type, position, quantite, recharge
@@ -70,7 +80,7 @@ Ant-Liquid-Brain-AI/
 |   |-- research_notes.md    # Notes scientifiques
 |-- tests/
 |   |-- tests_pheromones.py  # Test interactif souris : depot HOME/FOOD, rendu pygame
-|   |-- tests_food           # Test interactif souris : depot APHID/SUGAR, rendu pygame
+|   |-- tests_food.py        # Test interactif souris : depot APHID/SUGAR, rendu pygame
 |-- requirements.txt         # Bibliotheques du projet
 
 Note : l'arborescence sera mise a jour uniquement quand un fichier
@@ -188,7 +198,7 @@ python tests/tests_pheromones.py
 - Clic gauche souris : poser une source APHID a la position du curseur
 - Clic droit souris  : poser une source SUGAR a la position du curseur
 - Les pucerons ont un recharge_rate > 0, le sucre a recharge_rate = 0.0
-- Integration dans main.py : en cours (passer food_grid a mouse_brush, afficher get_food_surface)
+- Integration dans main.py : terminee (mouse_brush(food_grid), env.step() + renderer.render(env))
 
 ### Config ajoutee
 - N_FOOD_TYPES = 2

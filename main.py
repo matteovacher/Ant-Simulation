@@ -28,6 +28,8 @@ if __name__ == "__main__" :
     env = Environment(pheromone_grids, nest, food_grid, ants) # emplacement du nid au milieu
     renderer = Renderer()
 
+    font = pygame.font.SysFont("monospace", 20)
+
     while running : 
 
         for event in pygame.event.get() : 
@@ -45,6 +47,10 @@ if __name__ == "__main__" :
 
         actual_surface = pygame.transform.scale(actual_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
         screen.blit(actual_surface, (0,0))
+
+        text = font.render(f"Food collected : {env.nest.food_collected:.2f}", True, (255, 255, 255))
+
+        screen.blit(text, (10, 10))
 
         pygame.display.flip()
         clock.tick(FPS)

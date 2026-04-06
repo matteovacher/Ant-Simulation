@@ -35,8 +35,8 @@ class PheromoneGrid :
                         output = self.grids, # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
                         mode = 'constant', # ici on arrete le monde au bord sans rebond 
                         cval = 0.0, # val a l'ext ici nul au dela de la limite  
-                        truncate = 7.0, 
-                        radius = None, # jsute calcul via sigma  
+                        truncate = 4.0, 
+                        radius = None, # juste calcul via sigma  
                         axes = (1,2) # applique en 2D
                         ) 
 
@@ -51,5 +51,7 @@ class PheromoneGrid :
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
         self.grids[type_of_pheromone, y, x] = min(self.grids[type_of_pheromone, y, x] + value, 1)   
 
-
-
+    def get_pheromone(self, type_of_pheromone, x, y) : 
+        xi = int(np.clip(x, 0, GRID_WIDTH-1))
+        yi = int(np.clip(y, 0, GRID_HEIGHT-1))
+        return self.grids[type_of_pheromone, yi, xi]

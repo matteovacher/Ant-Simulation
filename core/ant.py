@@ -16,6 +16,7 @@ class Ant :
     def move(self,delta_theta) : 
         if self.eating_timer > 0 : 
             self.eating_timer -= 1
+            self.direction += np.pi if self.eating_timer == 1 else 0
             return int(self.x), int(self.y) # bouge pas tant que on mange 
         self.direction += delta_theta
         new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
@@ -39,8 +40,11 @@ class Ant :
         return old_x, old_y
 
     
-    def get_antenna_pos(self) : 
-        return [(self.x + self.length_antenna*np.cos(self.direction + self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction + self.angle_antenna)), (self.x + self.length_antenna*np.cos(self.direction - self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
+    def get_antenna_pos(self) :         
+        return [(self.x + HALF_LENGTH_BODY*np.cos(self.direction) + self.length_antenna*np.cos(self.direction + self.angle_antenna), 
+                 self.y + HALF_LENGTH_BODY* np.sin(self.direction) + self.length_antenna*np.sin(self.direction + self.angle_antenna)), 
+                 (self.x + HALF_LENGTH_BODY* np.cos(self.direction) + self.length_antenna*np.cos(self.direction - self.angle_antenna), 
+                  self.y + HALF_LENGTH_BODY* np.sin(self.direction) + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
 
     def is_at_nest(self, nest) :
         x_nest, y_nest = nest.get_x_y()

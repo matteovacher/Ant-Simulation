@@ -211,16 +211,48 @@ python tests/tests_pheromones.py
 - COLOR_APHID = (255, 220, 0)
 - COLOR_SUGAR = (100, 200, 255)
 
-## 12. Etat d'Avancement
+## 12. Decisions Techniques Validees (Etape 3)
+
+### Suivi de traces par gradient differentiel
+- Regle hand-crafted : delta_theta = ANTENNA_WEIGHT * (C_gauche - C_droite) + bruit_uniforme
+- Type de pheromone selon etat :
+  -> food_carried > TRESHOLD_FOOD : deposite FOOD, suit HOME (rentre au nid)
+  -> food_carried <= TRESHOLD_FOOD : deposite HOME, suit FOOD (cherche nourriture)
+- Bug corrige : ancien code utilisait le meme p_type pour depot et suivi
+  -> Correction : deux variables separees p_type_deposit et p_type_follow dans environment_bis.py
+- Modele antennes corrige : les antennes partent de la tete, pas du centre
+  -> get_antenna_pos() : position = (x + HALF_LENGTH_BODY*cos(theta) + L*cos(theta +/- alpha), ...)
+  -> HALF_LENGTH_BODY = 0.5 ajoute dans config.py
+- Demi-tour a la source : declenche dans move() au dernier step de gel (eating_timer == 1)
+  -> self.direction += np.pi au moment ou eating_timer passe de 2 a 1
+
+### Affichage multi-modes (a implementer)
+- Deux touches pour naviguer entre 3 modes d'affichage, fenetre toujours de taille fixe :
+  -> Touche "f" : display_mode = (display_mode - 1) % 3
+  -> Touche "j" : display_mode = (display_mode + 1) % 3
+  -> Mode 0 : HOME uniquement (brun)
+  -> Mode 1 : FOOD uniquement (vert)
+  -> Mode 2 : dominant (mode actuel, max des deux par case)
+- Variable display_mode dans main.py
+
+### Calibration parametres (observations Step 3)
+- EVAPORATION_RATE 0.997 -> 0.999 (demi-vie ~693 steps, traces plus persistantes)
+- N_ANTS 20 -> 50 (densite plus forte, meilleur renforcement des traces)
+- PHEROMONE_DEPOSIT 0.7 -> 0.8
+- NEST_RADIUS augmente pour faciliter retour au nid
+- ANTENNA_WEIGHT np.pi/3 -> np.pi/6 (biais max reduit, suivi plus fluide)
+- RANDOM_DIR np.pi/8 -> np.pi/10
+
+## 13. Etat d'Avancement
 - [x] Etape 0 : Environnement & bibliotheques
 - [x] Etape 1 : Grille & pheromones
 - [x] Etape 2a : Agent Fourmi (ant.py : mouvement, rebond, depot pheromones, antennes)
 - [x] Etape 2b : Nourriture (FoodSource + FoodGrid + tests_food + integration Environment
                  + rendu main.py + compteur food_collected + bugs corriges)
-- [ ] Etape 3 : Colonie & emergence
+- [x] Etape 3 : Colonie & emergence (suivi de traces par gradient differentiel, calibration parametres)
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
 
-## 13. Communication & Documentation
+## 14. Communication & Documentation
 Site web personnel : matteovacher.github.io (Hugo)
 -> Apres chaque etape validee, proposer un resume brut
    que Matteo reformulera avant publication
@@ -231,8 +263,9 @@ Site web personnel : matteovacher.github.io (Hugo)
 Articles publies :
 - Etape 1 : "Step 1 of Ant Simulation Project : Pheromones"
 - Etape 2 : "Step 2 of Ant Simulation Project : Ant Agent" (brouillon nourriture redige, a publier)
+- Etape 3 : "Step 3 of Ant Simulation Project : Colony and Emergence" (brouillon en cours, draft = true)
 
-## 14. Profil Developpeur
+## 15. Profil Developpeur
 Formation   : Supaero 2e annee (M1), apres MPSI/PSI* (Saint-Louis)
 Niveau      : Bon en algorithmique et mathematiques
 Langages    : Java (POO maitrisee), Python (algorithmique uniquement en prepa,

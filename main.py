@@ -35,13 +35,21 @@ if __name__ == "__main__" :
         for event in pygame.event.get() : 
             if event.type == pygame.QUIT : 
                 running = False
-            
+            elif event.type == pygame.KEYDOWN : 
+                if event.key == pygame.K_q : 
+                    env.display_mode = 1
+                elif event.key == pygame.K_s : 
+                    env.display_mode = 2
+                elif event.key == pygame.K_d : 
+                    env.display_mode = 3
+
         tf.mouse_brush(food_grid)
         
         screen.fill("black")
 
-        env.step()
-        env_surface = renderer.render(env)
+        env.step() 
+
+        env_surface = renderer.render(env, env.display_mode)
 
         actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
 

@@ -26,7 +26,8 @@ class PheromoneGrid :
 
     def update_pheromone(self) : 
         # d'abord on considere l'evaporation des pheromones 
-        self.grids *= EVAPORATION_RATE
+        self.grids[PheromoneGrid.HOME] *= EVAPORATION_RATE_HOME
+        self.grids[PheromoneGrid.FOOD] *= EVAPORATION_RATE_FOOD
 
         # ensuite on procede a la diffusion 
         gaussian_filter(self.grids, # la matrice a transfo 
@@ -49,9 +50,22 @@ class PheromoneGrid :
         # on verif que la case est dans les limites de la grille 
         if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
-        self.grids[type_of_pheromone, y, x] = min(self.grids[type_of_pheromone, y, x] + value, 1)   
+        # self.grids[type_of_pheromone, y, x] = max(value, self.grids[type_of_pheromone, y, x])   
+        self.grids[type_of_pheromone, y, x] = min(1, self.grids[type_of_pheromone, y, x] + value)   
+
 
     def get_pheromone(self, type_of_pheromone, x, y) : 
-        xi = int(np.clip(x, 0, GRID_WIDTH-1))
-        yi = int(np.clip(y, 0, GRID_HEIGHT-1))
-        return self.grids[type_of_pheromone, yi, xi]
+        
+        x = np.clip(x, 0, GRID_WIDTH - 1 - 0.001)
+        y = np.clip(y, 0, GRID_HEIGHT - 1 - 0.001)
+        
+        x0 = int(x)
+        y0 = int(y)
+        x1 = x0 + 1
+        y1 = y0 + 1
+        fx = x - x0 
+        fy = y - y0 
+
+        g = self.grids[type_of_pheromone]
+
+        return (1-fx)*(1-fy)*g[y0, x0] + fx*(1-fy)*g[y0, x1] + (1-fx)*fy*g[y1, x0] + fx*fy*g[y1, x1]

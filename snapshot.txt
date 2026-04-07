@@ -1,5 +1,5 @@
 # SNAPSHOT DU PROJET
-# Genere le : 2026-04-05 22:26:08
+# Genere le : 2026-04-07 17:25:44
 # Fichiers inclus : 15
 # Extensions : .py
 
@@ -10,48 +10,53 @@
 
 import numpy as np 
 
-# grille et pheromones 
+# GRID AND PHEROMONE 
+EVAPORATION_RATE_HOME = 0.999           # between 0 and 1, the higher the slower the evaporation
+EVAPORATION_RATE_FOOD = 0.996           # between 0 and 1 
+DIFFUSION_SIGMA = 1.00                  # between 0 and inf, the higher the more the pheromone spreads, but also the more it evaporates
+GRID_WIDTH = 960                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
+GRID_HEIGHT = 640                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
+CELL_SIZE = 1                           # size of each cell in pixels
+FPS = 45                                # frames per second
+WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE     # width of the window = width*cellsize (2880 pixels max )
+WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE   # height of the window = height*cellsize (1920 pixels max )
+PHEROMONE_DEPOSIT = 1                   # amount of pheromone deposited by an ant at each step, between 0 and 1
 
-EVAPORATION_RATE = 0.997   # entre 0 et 1 on def une suite geo 
-GRID_WIDTH = 360     # largeur de la grille en case 
-GRID_HEIGHT = 240       # hauteur de la grille aussi en case 
-DIFFUSION_SIGMA = 0.3    # pour la diffusion des pheromones et scipy 
-CELL_SIZE = 3           # taille de la case en pixels
-FPS = 24                # images par seconde
-WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE       # largeur de la fenetre = width*cellsize (2880 pixels max )
-WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE     # hauteur de la fenetre = height*cellsize (1920 pixels max )
-PHEROMONE_DEPOSIT = 0.7 
+# ENVIRONMENT
+COLOR_HOME = (139, 90, 43)              # brown color for the pheromone leading to the nest
+COLOR_FOOD = (50, 205, 50)              # green color for the pheromone leading to the food
+COLOR_BACKGROUND = (0, 0, 0)            # black color for the background
+COLOR_NEST = (255, 255, 255)            # white color for the nest
+NEST_RADIUS = 20                        # radius of the nest in cells
+NEST_X = int(GRID_WIDTH/2)              # coordinates of the nest, must be an integer 
+NEST_Y = int(GRID_HEIGHT/2)             # coordinates of the nest, must be an integer 
 
-# env
-#  
-COLOR_HOME = (139, 90, 43) # couleur marron 
-COLOR_FOOD = (50, 205, 50) # couleur vert 
-COLOR_BACKGROUND = (0, 0, 0) # couleur noir 
-COLOR_NEST = (255, 255, 255) # couleur blanc 
-NEST_RADIUS = 2 # rayon du nid 
-NEST_X = 100    # coordonnees du nid
-NEST_Y = 100    # coordonnees du nid
+# ANT
+N_ANTS = 200                            # number of ants in the simulation, must be an integer greater than 0
+LENGTH_ANTENNA = 1.5                    # length from the head to the tip of the antenna in cells, must be greater than 0
+ANGLE_ANTENNA = np.pi/4                 # angle between the direction of the ant and the direction of the antenna in radians, between 0 and pi/2, if 0 then antennas are in the same direction as the ant, if pi/2 then antennas are perpendicular to the direction of the ant
+COLOR_ANT_HOME = (255, 165, 0)          # orange color for the ants exploring 
+COLOR_ANT_FOOD = (0, 200, 80)           # different green color for ants carrying food 
+MAX_FOOD_CARRIED = 0.5                  # maximum amount of food an ant can carry, between 0 and 1, if 0.5 then an ant can carry half of a food source
+FOOD_COLLECT_AMOUNT = 0.5               # amount of food an ant can collect at one time, between 0 and MAX_FOOD_CARRIED
+EAT_DURATION = 8                        # number of steps an ant needs to eat a food source, during this time the ant cannot move or interact with other food sources, must be an integer
+ANTENNA_WEIGHT = np.pi/5                # weight of the pheromone bias on the ant's direction, between 0 and pi/2, if 0 then the ant ignores the pheromones, if pi/2 then the ant turns directly towards the strongest pheromone
+LIM_ANGLE = np.pi/3                     # maximum angle an ant can turn at each step
+TRESHOLD_FOOD = 0.45                    # threshold of food carried for an ant to switch from following home pheromone to following food pheromone, between 0 and MAX_FOOD_CARRIED
+RANDOM_DIR = np.pi/12                   # maximum random change in direction for an ant at each step, between 0 and pi, if 0 then the ant never changes direction randomly, if pi then the ant can turn in any direction at each step
+HALF_LENGTH_BODY = 1.5                  # half of the length of the ant's body in cells, used for drawing the ant as a line before adding the antenna 
+ANT_RADIUS = 2                          # must be integer for arrays and only for the visual here 
+DECAY_FACTOR_STEP = 0.995               # decay factor applied to the pheromone deposit at each step, between 0 and 1, slowly decrease the amount of pheromone deposited 
+NEST_DURATION = 12                      # number of steps an ant needs to stay at the nest after depositing food, during this time the ant cannot move or interact with food sources, must be an integer    
+NEST_ANGLE_VARIATION = np.pi/3          # maximum random change in direction for an ant when leaving the nest, between 0 and pi, if 0 then the ant leaves the nest in a straight line, if pi then the ant can leave the nest in any direction
 
-# ant 
-LENGTH_ANTENNA = 0.5 # longueur de l'antenne en cases
-ANGLE_ANTENNA = np.pi/4 # angle entre la direction de l'antenne et la direction de l'ant (en radians)
-N_ANTS = 20 
-COLOR_ANT = (255, 165, 0) # couloeur orange 
-MAX_FOOD_CARRIED = 0.5 
-FOOD_COLLECT_AMOUNT = 0.5 
-EAT_DURATION = 8
-ANTENNA_WEIGHT = np.pi/3
-TRESHOLD_FOOD = 0.45
-RANDOM_DIR = np.pi/8
-
-
-# food 
-N_FOOD_TYPES = 2 
-COLOR_APHID = (255, 220, 0) # couleur jaune
-COLOR_SUGAR = (100, 200, 255) # bleu 
-RECHARGE_RATE_APHID = 0.01
-RECHARGE_RATE_SUGAR = 0
-
+# FOOD SOURCES 
+N_FOOD_TYPES = 2                        # number of different types of food sources, must be an integer greater than 0
+COLOR_APHID = (255, 220, 0)             # color yellow for aphids, which are a type of food source that can recharge 
+COLOR_SUGAR = (100, 200, 255)           # color blue for sugar, which is another type of food source that does not recharge
+RECHARGE_RATE_APHID = 0.01              # recharge rate for aphids, between 0 and 1
+RECHARGE_RATE_SUGAR = 0                 # recharge rate for sugar, must be 0 since sugar does not recharge
+FOOD_RADIUS = 3                         # radius of the food source in cells, must be an integer
 
 
 # === .\main.py ===
@@ -93,13 +98,21 @@ if __name__ == "__main__" :
         for event in pygame.event.get() : 
             if event.type == pygame.QUIT : 
                 running = False
-            
+            elif event.type == pygame.KEYDOWN : 
+                if event.key == pygame.K_q : 
+                    env.display_mode = 1
+                elif event.key == pygame.K_s : 
+                    env.display_mode = 2
+                elif event.key == pygame.K_d : 
+                    env.display_mode = 3
+
         tf.mouse_brush(food_grid)
         
         screen.fill("black")
 
-        env.step()
-        env_surface = renderer.render(env)
+        env.step() 
+
+        env_surface = renderer.render(env, env.display_mode)
 
         actual_surface = pygame.surfarray.make_surface(np.transpose(env_surface, (1, 0, 2)))
 
@@ -199,11 +212,24 @@ class Ant :
         self.direction = np.random.uniform(0, 2*np.pi) # direction initiale aleatoire
         self.angle_antenna = angle_antenna
         self.length_antenna = length_antenna  # longueur de l'antenne en cases
+        self.pheromone_deposit = PHEROMONE_DEPOSIT
+        self.nest_timer = 0 
+
 
     def move(self,delta_theta) : 
         if self.eating_timer > 0 : 
             self.eating_timer -= 1
-            return int(self.x), int(self.y) # bouge pas tant que on mange 
+            self.direction += np.pi if self.eating_timer == 0 else 0
+            self.pheromone_deposit = PHEROMONE_DEPOSIT if self.eating_timer == 0 else 0
+            return self.x, self.y # bouge pas tant que on mange 
+        
+        if self.nest_timer > 0 : 
+            self.nest_timer -= 1
+            self.pheromone_deposit = PHEROMONE_DEPOSIT if self.nest_timer == 0 else 0
+            self.direction += np.pi if self.nest_timer == 0 else 0
+            delta_theta = np.random.uniform(-NEST_ANGLE_VARIATION, NEST_ANGLE_VARIATION) if self.nest_timer == 1 else 0
+            return self.x, self.y # bouge pas tant que on est au nid
+
         self.direction += delta_theta
         new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
         new_y = self.y + np.sin(self.direction)
@@ -218,17 +244,34 @@ class Ant :
         if y_clipped != new_y : 
             self.direction = -self.direction
 
-        old_x, old_y = int(self.x), int(self.y)
+        old_x, old_y = self.x, self.y
     
         self.x = x_clipped 
         self.y = y_clipped 
 
+        self.pheromone_deposit *= DECAY_FACTOR_STEP
+        if self.pheromone_deposit < 0.001 : 
+            self.pheromone_deposit = 0 
+
         return old_x, old_y
 
     
-    def get_antenna_pos(self) : 
-        return [(self.x + self.length_antenna*np.cos(self.direction + self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction + self.angle_antenna)), (self.x + self.length_antenna*np.cos(self.direction - self.angle_antenna), self.y + self.length_antenna*np.sin(self.direction - self.angle_antenna))] 
+    def get_antenna_pos(self) :   
+        # the head 
+        hx = self.x + HALF_LENGTH_BODY*np.cos(self.direction)
+        hy = self.y + HALF_LENGTH_BODY* np.sin(self.direction)
 
+        left = (hx + self.length_antenna*np.cos(self.direction + self.angle_antenna), 
+                hy + self.length_antenna*np.sin(self.direction + self.angle_antenna))
+        
+        right = (hx + self.length_antenna*np.cos(self.direction - self.angle_antenna), 
+                 hy + self.length_antenna*np.sin(self.direction - self.angle_antenna))
+        
+        front = (hx + self.length_antenna*np.cos(self.direction), 
+                 hy + self.length_antenna*np.sin(self.direction))
+        
+
+        return left, right, front
     def is_at_nest(self, nest) :
         x_nest, y_nest = nest.get_x_y()
         return (self.x - x_nest)**2 + (self.y - y_nest)**2 <= NEST_RADIUS**2 
@@ -245,6 +288,7 @@ class Ant :
         elif self.food_carried > 0 and at_nest :
             deposited = self.food_carried
             self.food_carried = 0 
+            self.nest_timer = NEST_DURATION # on doit attendre un peu avant de pouvoir bouger ou interagir à nouveau
             return deposited 
         return 0.0
     
@@ -359,6 +403,7 @@ class Environment:
         self.nest = nest
         self.food_grid = food_grid
         self.ants = ants
+        self.display_mode = 1
 
     def get_x_y(self):
         return self.nest.get_x_y()
@@ -373,9 +418,26 @@ class Environment:
 
         for ant in self.ants:
             delta_theta = np.random.uniform(-RANDOM_DIR, RANDOM_DIR)
-            old_x, old_y = ant.move(delta_theta)
-            p_type = PheromoneGrid.FOOD if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.HOME
-            self.pheromone_grids.add_pheromones(p_type, old_x, old_y, PHEROMONE_DEPOSIT)
+            p_type_deposit = PheromoneGrid.FOOD if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.HOME
+            p_type_follow = PheromoneGrid.HOME if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.FOOD
+
+            (lx, ly), (rx, ry), (fx, fy) = ant.get_antenna_pos()
+            left_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, lx, ly)
+            right_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, rx, ry)
+            front_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, fx, fy)
+
+            if front_pheromone >= left_pheromone and front_pheromone >= right_pheromone :
+                bias = 0
+            elif left_pheromone > right_pheromone :
+                 bias = ANTENNA_WEIGHT*(left_pheromone - right_pheromone)
+            else : 
+                bias = -ANTENNA_WEIGHT*(right_pheromone - left_pheromone)
+
+            total_delta = np.clip(delta_theta + bias, -LIM_ANGLE, LIM_ANGLE) # on limite le changement de direction pour eviter les changements brusques qui font tourner en rond
+
+            old_x, old_y = ant.move(total_delta)
+
+            self.pheromone_grids.add_pheromones(p_type_deposit, int(old_x), int(old_y), ant.pheromone_deposit)
 
             source = self.food_grid.get_source(int(ant.x), int(ant.y))
             deposited = ant.interact(source, ant.is_at_nest(self.nest))
@@ -413,7 +475,10 @@ class FoodGrid:
             self.grid[source.type_food, source.y, source.x] = source.quantity
 
     def get_source(self, x, y) : 
-        return self.source_map.get((x, y), None)
+        for source in self.sources : 
+            if (x - source.x)**2 + (y - source.y)**2 <= FOOD_RADIUS**2:
+                return source
+        return None
 
 
 
@@ -495,7 +560,8 @@ class PheromoneGrid :
 
     def update_pheromone(self) : 
         # d'abord on considere l'evaporation des pheromones 
-        self.grids *= EVAPORATION_RATE
+        self.grids[PheromoneGrid.HOME] *= EVAPORATION_RATE_HOME
+        self.grids[PheromoneGrid.FOOD] *= EVAPORATION_RATE_FOOD
 
         # ensuite on procede a la diffusion 
         gaussian_filter(self.grids, # la matrice a transfo 
@@ -504,8 +570,8 @@ class PheromoneGrid :
                         output = self.grids, # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
                         mode = 'constant', # ici on arrete le monde au bord sans rebond 
                         cval = 0.0, # val a l'ext ici nul au dela de la limite  
-                        truncate = 7.0, 
-                        radius = None, # jsute calcul via sigma  
+                        truncate = 4.0, 
+                        radius = None, # juste calcul via sigma  
                         axes = (1,2) # applique en 2D
                         ) 
 
@@ -518,13 +584,28 @@ class PheromoneGrid :
         # on verif que la case est dans les limites de la grille 
         if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
             raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
-        self.grids[type_of_pheromone, y, x] = min(self.grids[type_of_pheromone, y, x] + value, 1)   
+        self.grids[type_of_pheromone, y, x] = max(value, self.grids[type_of_pheromone, y, x])   
 
+    def get_pheromone(self, type_of_pheromone, x, y) : 
+        
+        x = np.clip(x, 0, GRID_WIDTH - 1 - 0.001)
+        y = np.clip(y, 0, GRID_HEIGHT - 1 - 0.001)
+        
+        x0 = int(x)
+        y0 = int(y)
+        x1 = x0 + 1
+        y1 = y0 + 1
+        fx = x - x0 
+        fy = y - y0 
 
+        g = self.grids[type_of_pheromone]
 
+        return (1-fx)*(1-fy)*g[y0, x0] + fx*(1-fy)*g[y0, x1] + (1-fx)*fy*g[y1, x0] + fx*fy*g[y1, x1]
 
 
 # === .\core\renderer.py ===
+
+from pygame import surface
 
 from core.pheromone_grid import PheromoneGrid
 from config import *
@@ -534,16 +615,29 @@ from core.food_source import FoodSource
 
 class Renderer:
 
-    def render(self, env):
-        surface = self._get_pheromone_surface(env.pheromone_grids)
+    def render(self, env, display_mode):
+        if display_mode == 1 : 
+            surface = self._get_pheromone_surface(env.pheromone_grids)
+        elif display_mode == 2 :
+            surface = self._get_pheromone_home_surface(env.pheromone_grids)
+        elif display_mode == 3 :
+            surface = self._get_pheromone_food_surface(env.pheromone_grids)
 
         food_surface = self._get_food_surface(env.food_grid)
         food_mask = np.any(food_surface != 0, axis=2)
         surface[food_mask] = food_surface[food_mask]
 
-        for ant in env.ants:
-            surface[int(ant.y), int(ant.x)] = COLOR_ANT
+        dy, dx = np.ogrid[-ANT_RADIUS:ANT_RADIUS+1, -ANT_RADIUS:ANT_RADIUS+1]
+        ant_mask = dx**2 + dy**2 <= ANT_RADIUS**2
 
+        for ant in env.ants:
+            ax, ay = int(ant.x), int(ant.y)
+            color = COLOR_ANT_FOOD if ant.food_carried > TRESHOLD_FOOD else COLOR_ANT_HOME
+            y0, y1 = max(ay - ANT_RADIUS, 0), min(ay + ANT_RADIUS + 1, GRID_HEIGHT)
+            x0, x1 = max(ax - ANT_RADIUS, 0), min(ax + ANT_RADIUS + 1, GRID_WIDTH)
+            local_mask = ant_mask[y0-ay+ANT_RADIUS : y1-ay+ANT_RADIUS, x0-ax+ANT_RADIUS : x1-ax+ANT_RADIUS]
+            surface[y0:y1, x0:x1][local_mask] = color
+            
         nest_surface = self._get_nest_surface(env.nest)
         nest_mask = np.any(nest_surface != 0, axis=2)
         surface[nest_mask] = nest_surface[nest_mask]
@@ -564,19 +658,49 @@ class Renderer:
         rgb[:, :, 2] = np.where(home_stronger, home * bh, food * bf)
 
         return rgb.astype(np.uint8)
+    
+    def _get_pheromone_home_surface(self, pheromone_grids) : 
+        rh, gh, bh = COLOR_HOME 
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        home = pheromone_grids.get_pheromone_type(PheromoneGrid.HOME)
+        home_mask = home > 0 
+
+        rgb[:, :, 0] = np.where(home_mask, home*rh, 0) 
+        rgb[:, :, 1] = np.where(home_mask, home*gh, 0)
+        rgb[:, :, 2] = np.where(home_mask, home*bh, 0)
+
+        return rgb.astype(np.uint8)
+    
+    def _get_pheromone_food_surface(self, pheromone_grids) : 
+        rf, gf, bf = COLOR_FOOD
+        rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+
+        food = pheromone_grids.get_pheromone_type(PheromoneGrid.FOOD)
+        food_mask = food > 0
+
+        rgb[:, :, 0] = np.where(food_mask, food * rf, 0)
+        rgb[:, :, 1] = np.where(food_mask, food * gf, 0)
+        rgb[:, :, 2] = np.where(food_mask, food * bf, 0)
+
+        return rgb.astype(np.uint8)
+
 
     def _get_food_surface(self, food_grid):
         ra, ga, ba = COLOR_APHID
         rs, gs, bs = COLOR_SUGAR
         rgb = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
+        dy, dx = np.ogrid[-FOOD_RADIUS:FOOD_RADIUS+1, -FOOD_RADIUS:FOOD_RADIUS+1]
+        food_mask = dx**2 + dy**2 <= FOOD_RADIUS**2
 
-        aphid = food_grid.grid[FoodSource.APHID]
-        sugar = food_grid.grid[FoodSource.SUGAR]
-        aphid_stronger = aphid > sugar
+        for source in food_grid.sources:
 
-        rgb[:, :, 0] = np.where(aphid_stronger, aphid * ra, sugar * rs)
-        rgb[:, :, 1] = np.where(aphid_stronger, aphid * ga, sugar * gs)
-        rgb[:, :, 2] = np.where(aphid_stronger, aphid * ba, sugar * bs)
+            color = COLOR_APHID if source.type_food == FoodSource.APHID else COLOR_SUGAR
+            x, y = source.x, source.y 
+            y0, y1 = max(y - FOOD_RADIUS, 0), min(y + FOOD_RADIUS + 1, GRID_HEIGHT)
+            x0, x1 = max(x - FOOD_RADIUS, 0), min(x + FOOD_RADIUS + 1, GRID_WIDTH)
+            local_mask = food_mask[y0-y+FOOD_RADIUS:y1-y+FOOD_RADIUS,x0-x+FOOD_RADIUS:x1-x+FOOD_RADIUS]
+            rgb[y0:y1, x0:x1][local_mask] = [c*source.quantity for c in color]
 
         return rgb.astype(np.uint8)
 

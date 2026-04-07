@@ -81,6 +81,7 @@ Ant-Liquid-Brain-AI/
 |-- tests/
 |   |-- tests_pheromones.py  # Test interactif souris : depot HOME/FOOD, rendu pygame
 |   |-- tests_food.py        # Test interactif souris : depot APHID/SUGAR, rendu pygame
+|-- evaluation_parameters.py # Diagnostic parametres : demi-vies, SNR, antennes, inventaire
 |-- requirements.txt         # Bibliotheques du projet
 
 Note : l'arborescence sera mise a jour uniquement quand un fichier
@@ -226,22 +227,46 @@ python tests/tests_pheromones.py
 - Demi-tour a la source : declenche dans move() au dernier step de gel (eating_timer == 1)
   -> self.direction += np.pi au moment ou eating_timer passe de 2 a 1
 
-### Affichage multi-modes (a implementer)
-- Deux touches pour naviguer entre 3 modes d'affichage, fenetre toujours de taille fixe :
-  -> Touche "f" : display_mode = (display_mode - 1) % 3
-  -> Touche "j" : display_mode = (display_mode + 1) % 3
-  -> Mode 0 : HOME uniquement (brun)
-  -> Mode 1 : FOOD uniquement (vert)
-  -> Mode 2 : dominant (mode actuel, max des deux par case)
-- Variable display_mode dans main.py
+### Affichage multi-modes (implemente)
+- Trois touches pour choisir le mode d'affichage, fenetre toujours de taille fixe :
+  -> Touche "q" : Mode 1 - dominant (max des deux pheromones par case, mode par defaut)
+  -> Touche "s" : Mode 2 - HOME uniquement (brun)
+  -> Touche "d" : Mode 3 - FOOD uniquement (vert)
+- Variable display_mode initialisee a 1 dans main.py, passee en parametre a renderer.render()
+- Methodes dans renderer.py : _get_pheromone_surface (mode 1), _get_pheromone_home_surface (mode 2), _get_pheromone_food_surface (mode 3)
 
 ### Calibration parametres (observations Step 3)
-- EVAPORATION_RATE 0.997 -> 0.999 (demi-vie ~693 steps, traces plus persistantes)
-- N_ANTS 20 -> 50 (densite plus forte, meilleur renforcement des traces)
-- PHEROMONE_DEPOSIT 0.7 -> 0.8
+- EVAPORATION_RATE scinde en EVAPORATION_RATE_HOME et EVAPORATION_RATE_FOOD (taux differents)
+- N_ANTS 20 -> 50 -> 200
+- PHEROMONE_DEPOSIT 0.7 -> 0.8 -> 1.0
 - NEST_RADIUS augmente pour faciliter retour au nid
-- ANTENNA_WEIGHT np.pi/3 -> np.pi/6 (biais max reduit, suivi plus fluide)
+- ANTENNA_WEIGHT np.pi/3 -> np.pi/6 -> np.pi/2
 - RANDOM_DIR np.pi/8 -> np.pi/10
+- HALF_LENGTH_BODY passe a 1.0 pour rayon fourmi visible
+- FOOD_RADIUS ajoute pour affichage et detection de nourriture (cercle)
+- CELL_SIZE reduit a 1 (grille 960x640) pour plus de surface de simulation
+
+### Bugs corriges (post Step 3)
+- nest_timer jamais declenche : manquait self.nest_timer = NEST_DURATION dans interact()
+- PHEROMONE_DEPOSIT hardcode dans environment_bis.py au lieu de ant.pheromone_deposit
+- add_pheromones : pas de int() sur x/y -> crash avec positions float
+- get_pheromone defini deux fois dans pheromone_grid.py (premiere version code mort)
+- eating_timer : condition == 1 decalee -> pheromone_deposit bloque a 0 apres collecte
+  -> corrige en == 0 (timer deja decremente avant la condition)
+- from pygame import surface dans renderer.py : shadow de la variable locale surface
+- color * float illegal en Python : tuple * float invalide, remplace par list comprehension
+- EVAPORATION_RATE utilise dans pheromone_grid.py apres renommage -> NameError
+- ant utilise avant la boucle for ant in env.ants dans render()
+- HALF_LENGTH_BODY float utilise comme index de slice -> TypeError
+
+### Difficultes rencontrees (Etape 3 - affichage)
+- Coordonnees systeme grille vs systeme masque ogrid : deux espaces differents,
+  il faut clipper a la fois la slice sur la surface ET le masque en coherence
+  (local_mask = ant_mask[y0-ay+R : y1-ay+R, x0-ax+R : x1-ax+R])
+- tuple * float invalide en Python (seul tuple * int repete le tuple) :
+  pour appliquer une intensite RGB, utiliser [c * intensity for c in color]
+- Bord de grille : une fourmi a x=0 avec ANT_RADIUS=2 cree une slice plus petite
+  que le masque -> crash si le masque n'est pas recadre en meme temps que la slice
 
 ## 13. Etat d'Avancement
 - [x] Etape 0 : Environnement & bibliotheques
@@ -250,6 +275,7 @@ python tests/tests_pheromones.py
 - [x] Etape 2b : Nourriture (FoodSource + FoodGrid + tests_food + integration Environment
                  + rendu main.py + compteur food_collected + bugs corriges)
 - [x] Etape 3 : Colonie & emergence (suivi de traces par gradient differentiel, calibration parametres)
+  - [x] Outil de diagnostic evaluation_parameters.py cree (calibration parametres : demi-vies, SNR, antennes, inventaire)
 - [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
 
 ## 14. Communication & Documentation

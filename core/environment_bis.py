@@ -10,6 +10,7 @@ class Environment:
         self.nest = nest
         self.food_grid = food_grid
         self.ants = ants
+        self.display_mode = 1
 
     def get_x_y(self):
         return self.nest.get_x_y()
@@ -27,15 +28,23 @@ class Environment:
             p_type_deposit = PheromoneGrid.FOOD if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.HOME
             p_type_follow = PheromoneGrid.HOME if ant.food_carried > TRESHOLD_FOOD else PheromoneGrid.FOOD
 
-            (lx, ly) , (rx, ry) = ant.get_antenna_pos()
+            (lx, ly), (rx, ry), (fx, fy) = ant.get_antenna_pos()
             left_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, lx, ly)
             right_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, rx, ry)
+            front_pheromone = self.pheromone_grids.get_pheromone(p_type_follow, fx, fy)
 
-            bias = ANTENNA_WEIGHT*(left_pheromone - right_pheromone) # if right - left then will turn in the wrong direction 
+            if front_pheromone >= left_pheromone and front_pheromone >= right_pheromone :
+                bias = 0
+            elif left_pheromone > right_pheromone :
+                 bias = ANTENNA_WEIGHT*(left_pheromone - right_pheromone)
+            else : 
+                bias = -ANTENNA_WEIGHT*(right_pheromone - left_pheromone)
 
-            old_x, old_y = ant.move(delta_theta + bias)
+            total_delta = np.clip(delta_theta + bias, -LIM_ANGLE, LIM_ANGLE) # on limite le changement de direction pour eviter les changements brusques qui font tourner en rond
 
-            self.pheromone_grids.add_pheromones(p_type_deposit, old_x, old_y, PHEROMONE_DEPOSIT)
+            old_x, old_y = ant.move(total_delta)
+
+            self.pheromone_grids.add_pheromones(p_type_deposit, int(old_x), int(old_y), ant.pheromone_deposit)
 
             source = self.food_grid.get_source(int(ant.x), int(ant.y))
             deposited = ant.interact(source, ant.is_at_nest(self.nest))

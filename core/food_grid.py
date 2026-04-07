@@ -26,7 +26,10 @@ class FoodGrid:
             self.grid[source.type_food, source.y, source.x] = source.quantity
 
     def get_source(self, x, y) : 
-        return self.source_map.get((x, y), None)
+        for source in self.sources : 
+            if (x - source.x)**2 + (y - source.y)**2 <= FOOD_RADIUS**2:
+                return source
+        return None
 
 
 

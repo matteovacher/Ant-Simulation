@@ -23,8 +23,15 @@ Regles fondamentales :
 - Le meme reseau produit des comportements differents car les entrees sont differentes
 - C'est CE sous-reseau unique qui est evolue par l'algorithme genetique
 
-Algorithme genetique retenu : MAP-Elites
-Dimensions comportementales : a definir lors de l'Etape 4
+Algorithme genetique retenu : CMA-ES dans un premier temps (plus simple a implémenter,
+  bon point de depart pour faire evoluer un reseau de taille fixe)
+-> MAP-Elites envisage dans un second temps, quand la simulation sera plus complexe
+   (dimensions comportementales a definir a ce moment-la)
+
+Note sur RANDOM_DIR : le bruit de direction aleatoire sera retire une fois le
+reseau neuronal en place. C'est le reseau qui gerera toute la prise de decision,
+y compris l'exploration. La regle hand-crafted (delta_theta gradient) sera
+egalement remplacee par la sortie du reseau.
 
 Reference scientifique cle :
 - Crosscombe et al. (2024), "A Simulation Environment for the Neuroevolution
@@ -276,7 +283,13 @@ python tests/tests_pheromones.py
                  + rendu main.py + compteur food_collected + bugs corriges)
 - [x] Etape 3 : Colonie & emergence (suivi de traces par gradient differentiel, calibration parametres)
   - [x] Outil de diagnostic evaluation_parameters.py cree (calibration parametres : demi-vies, SNR, antennes, inventaire)
-- [ ] Etape 4 : Algorithmes Genetiques (MAP-Elites)
+- [ ] Etape 4 : Neuroevolution via CMA-ES
+  - Retirer RANDOM_DIR : le reseau gere toute la prise de decision
+  - Remplacer la regle hand-crafted par la sortie du reseau (delta_theta)
+  - Definir l'architecture du sous-reseau partage entre toutes les fourmis
+  - Implémenter la boucle CMA-ES (evaluer, classer, mettre a jour la distribution)
+  - Definir le fitness : nourriture collectee sur N steps avec scenario fixe
+  - MAP-Elites : etape ulterieure, quand la simulation sera plus complexe
 
 ## 14. Communication & Documentation
 Site web personnel : matteovacher.github.io (Hugo)

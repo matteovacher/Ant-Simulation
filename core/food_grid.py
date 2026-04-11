@@ -7,29 +7,40 @@ class FoodGrid:
     def __init__(self, food_sources):
         self.sources = food_sources
         self.grid = np.zeros((N_FOOD_TYPES, GRID_HEIGHT, GRID_WIDTH))
-        self.source_map = {}
+        self.proximity_map= {}
         self._build_grid()
+        self._build_proximity_map()
 
     def _build_grid(self):
         for source in self.sources : 
             self.grid[source.type_food, source.y, source.x] = source.quantity
-            self.source_map[(source.x, source.y)] = source
+
+    def _build_proximity_map(self) :
+        for source in self.sources : 
+            for x in range(max(0, source.x - FOOD_RADIUS), min(GRID_WIDTH, source.x + FOOD_RADIUS + 1)) : 
+                for y in range(max(0, source.y - FOOD_RADIUS), min(GRID_HEIGHT, source.y + FOOD_RADIUS + 1)) : 
+                    if source.distance(x, y) <= FOOD_RADIUS :
+                        if (x, y) not in self.proximity_map : 
+                            self.proximity_map[(x, y)] = source 
 
     def add_source(self, source) : 
         self.sources.append(source)
         self.grid[source.type_food, source.y, source.x] = source.quantity
-        self.source_map[(source.x, source.y)] = source
+        for x in range(max(0, source.x - FOOD_RADIUS), min(GRID_WIDTH, source.x + FOOD_RADIUS + 1)) : 
+            for y in range(max(0, source.y - FOOD_RADIUS), min(GRID_HEIGHT, source.y + FOOD_RADIUS + 1)) : 
+                if source.distance(x, y) <= FOOD_RADIUS :
+                    self.proximity_map[(x, y)] = source
 
     def update(self):
         for source in self.sources : 
-            source.recharge()
-            self.grid[source.type_food, source.y, source.x] = source.quantity
+            if source.type_food == FoodSource.SUGAR and source.quantity == 0 :
+                continue
+            source.recharge() 
+            self.grid[source.type_food, source.y, source.x] = source.quantity 
+
 
     def get_source(self, x, y) : 
-        for source in self.sources : 
-            if (x - source.x)**2 + (y - source.y)**2 <= FOOD_RADIUS**2:
-                return source
-        return None
+        return self.proximity_map.get((x, y), None)
 
 
 

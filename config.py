@@ -4,9 +4,9 @@ import numpy as np
 EVAPORATION_RATE_HOME = 0.999           # between 0 and 1, the higher the slower the evaporation
 EVAPORATION_RATE_FOOD = 0.996           # between 0 and 1 
 DIFFUSION_SIGMA = 0.25                  # between 0 and inf, the higher the more the pheromone spreads, but also the more it evaporates
-GRID_WIDTH = 960                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
-GRID_HEIGHT = 640                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
-CELL_SIZE = 1                           # size of each cell in pixels
+GRID_WIDTH = 510                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
+GRID_HEIGHT = 340                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
+CELL_SIZE = 2                           # size of each cell in pixels
 FPS = 45                                # frames per second
 WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE     # width of the window = width*cellsize (2880 pixels max )
 WINDOW_HEIGHT = GRID_HEIGHT*CELL_SIZE   # height of the window = height*cellsize (1920 pixels max )

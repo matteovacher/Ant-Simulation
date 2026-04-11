@@ -22,4 +22,7 @@ class FoodSource:
     def consume(self, amount):
         taken = min(self.quantity, amount)
         self.quantity -= taken
-        return taken  # retourne ce qui a vraiment ete pris pas plus 
+        return taken  # retourne ce qui a vraiment ete pris pas plus
+
+    def distance(self, x, y) : 
+        return ((self.x - x)**2 + (self.y - y)**2)**0.5

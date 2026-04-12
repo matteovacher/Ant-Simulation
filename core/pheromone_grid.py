@@ -10,11 +10,6 @@ class PheromoneGrid :
     def __init__(self) : 
         # ici le 0 c'est le home ie retour et 1 c'est vers nouriture 
         self.grids = np.zeros((2, GRID_HEIGHT, GRID_WIDTH))
-
-    def get_pheromone(self, type_of_pheromone, x, y) : 
-        if x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT : 
-            raise ValueError(f"Position ({x}, {y}) hors des limites de la grille")
-        return self.grids[type_of_pheromone, y, x]
     
     def get_pheromone_type(self, type_of_pheromone) : 
         return self.grids[type_of_pheromone]
@@ -30,16 +25,28 @@ class PheromoneGrid :
         self.grids[PheromoneGrid.FOOD] *= EVAPORATION_RATE_FOOD
 
         # ensuite on procede a la diffusion 
-        gaussian_filter(self.grids, # la matrice a transfo 
-                        sigma = DIFFUSION_SIGMA, # le rayonnement ie si grand ca s'etale bcp cf diffusion physique 
+        gaussian_filter(self.grids[PheromoneGrid.HOME], # la matrice a transfo 
+                        sigma = DIFFUSION_SIGMA_HOME, # le rayonnement ie si grand ca s'etale bcp cf diffusion physique 
                         order = 0, # pas de dérivé 
-                        output = self.grids, # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
+                        output = self.grids[PheromoneGrid.HOME], # efficacité memoire modif direct sur la grille sans nouvelle alloc memoire 
                         mode = 'constant', # ici on arrete le monde au bord sans rebond 
                         cval = 0.0, # val a l'ext ici nul au dela de la limite  
                         truncate = 4.0, 
                         radius = None, # juste calcul via sigma  
-                        axes = (1,2) # applique en 2D
+                         # applique en 2D donc pas de axes 
                         ) 
+        
+        gaussian_filter(self.grids[PheromoneGrid.FOOD],
+                        sigma = DIFFUSION_SIGMA_FOOD, 
+                        order = 0, 
+                        output = self.grids[PheromoneGrid.FOOD], 
+                        mode = 'constant', 
+                        cval = 0.0, 
+                        truncate = 4.0, 
+                        radius = None, 
+                        # applique en 2D donc toujours pas de axes 
+                        )
+
 
         # si la valeur est trop faible on la met à 0 
         self.grids[self.grids < 0.0001] = 0 

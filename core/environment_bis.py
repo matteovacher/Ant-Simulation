@@ -44,9 +44,9 @@ class Environment:
 
             old_x, old_y = ant.move(total_delta)
 
-            self.pheromone_grids.add_pheromones(p_type_deposit, int(old_x), int(old_y), ant.pheromone_deposit)
+            self.pheromone_grids.add_pheromones(p_type_deposit, round(old_x), round(old_y), ant.pheromone_deposit)
 
-            source = self.food_grid.get_source(int(ant.x), int(ant.y))
+            source = self.food_grid.get_source(round(ant.x), round(ant.y))
             deposited = ant.interact(source, ant.is_at_nest(self.nest))
             if deposited > 0:
                 self.nest.food_collected += deposited

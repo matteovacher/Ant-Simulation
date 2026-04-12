@@ -85,8 +85,8 @@ row("FOOD  demi-vie", half_life_food / FPS, "s")
 # Chaque convolution ajoute DIFFUSION_SIGMA^2 a la variance du profil.
 # Apres N steps : variance = N * DIFFUSION_SIGMA^2  =>  sigma_eff = DIFFUSION_SIGMA * sqrt(N)
 # N = demi-vie : a cet instant la trace est a mi-hauteur, c'est son etat "utile".
-sigma_eff_home = DIFFUSION_SIGMA * np.sqrt(half_life_home)
-sigma_eff_food = DIFFUSION_SIGMA * np.sqrt(half_life_food)
+sigma_eff_home = DIFFUSION_SIGMA_HOME * np.sqrt(half_life_home)
+sigma_eff_food = DIFFUSION_SIGMA_FOOD * np.sqrt(half_life_food)
 
 section("sigma_eff : ecart-type caracteristique de la trace a la demi-vie")
 info("C'est la largeur de la bosse de pheromones a l'ecran.")
@@ -99,6 +99,26 @@ row("HOME  sigma_eff", sigma_eff_home, "cellules",
     warn=(sigma_eff_home < 1.5), good=(3 < sigma_eff_home < 20))
 row("FOOD  sigma_eff", sigma_eff_food, "cellules",
     warn=(sigma_eff_food < 1.5), good=(2 < sigma_eff_food < 15))
+
+hwhm_home = sigma_eff_home * np.sqrt(2 * np.log(2))
+hwhm_food = sigma_eff_food * np.sqrt(2 * np.log(2))
+sigma_steady_home = DIFFUSION_SIGMA_HOME * np.sqrt(EVAPORATION_RATE_HOME / (1 - EVAPORATION_RATE_HOME))
+sigma_steady_food = DIFFUSION_SIGMA_FOOD * np.sqrt(EVAPORATION_RATE_FOOD / (1 - EVAPORATION_RATE_FOOD))
+
+section("sigma_eff : depot unique vs trail continu")
+info("sigma_eff ci-dessus = largeur d'UN depot qui diffuse pendant N_halflife steps.")
+info("sigma_steady = largeur du trail EN REGIME ETABLI (superposition de tous les depots).")
+info("  formule : sigma * sqrt(r / (1-r))  avec r = EVAPORATION_RATE")
+info("sigma_steady > sigma_eff car les vieux depots larges s'accumulent.")
+info("HWHM = demi-largeur ou C tombe a 50% du pic = 1.177 * sigma_eff.")
+info("Visuellement le trail semble moins large : le depot frais (centre, fort) domine.")
+print()
+row("HOME  HWHM  (demi-largeur a 50% du pic)", hwhm_home, "cellules")
+row("FOOD  HWHM  (demi-largeur a 50% du pic)", hwhm_food, "cellules")
+row("HOME  sigma_steady (regime etabli)", sigma_steady_home, "cellules",
+    warn=(sigma_steady_home < 2), good=(5 < sigma_steady_home < 40))
+row("FOOD  sigma_steady (regime etabli)", sigma_steady_food, "cellules",
+    warn=(sigma_steady_food < 2), good=(3 < sigma_steady_food < 30))
 
 
 # -----------------------------------------------------------------------------
@@ -117,9 +137,19 @@ header("2. ANTENNES - GEOMETRIE ET ACCORD AVEC LA TRACE")
 lateral_sep = 2 * LENGTH_ANTENNA * np.sin(ANGLE_ANTENNA)
 forward_reach = HALF_LENGTH_BODY + LENGTH_ANTENNA * np.cos(ANGLE_ANTENNA)
 
+forward_advance = LENGTH_ANTENNA * (1 - np.cos(ANGLE_ANTENNA))
+dist_front_to_side = 2 * LENGTH_ANTENNA * np.sin(ANGLE_ANTENNA / 2)
+ratio_fwd_lat = forward_reach / lateral_sep
+
 section("Dimensions  (ANT_RADIUS={} est visuel uniquement)".format(ANT_RADIUS))
 row("Separation laterale  2*L*sin(alpha)", lateral_sep, "cellules")
 row("Portee avant  HALF_BODY+L*cos(alpha)", forward_reach, "cellules")
+row("Avance avant vs laterales  L*(1-cos(a))", forward_advance, "cellules",
+    note="combien le front voit plus loin que les cotes")
+row("Distance pointe avant -> pointe cote", dist_front_to_side, "cellules",
+    note="ecart geometrique entre front et une antenne laterale")
+row("Ratio portee_avant / sep_laterale", ratio_fwd_lat, "",
+    note="> 1 = front regarde loin devant | < 1 = front regarde proche")
 
 # Ratio separation / sigma_eff :
 # Les deux antennes echantillonnent le profil gaussien a deux points distants de lateral_sep.
@@ -347,8 +377,15 @@ print(f"""
   -- Antennes --
   {'separation laterale':<38} {lateral_sep:>10.2f}   cellules
   {'portee avant':<38} {forward_reach:>10.2f}   cellules
+  {'avance avant vs laterales':<38} {forward_advance:>10.2f}   cellules
+  {'dist pointe avant -> pointe cote':<38} {dist_front_to_side:>10.2f}   cellules
+  {'ratio portee_avant / sep_laterale':<38} {ratio_fwd_lat:>10.3f}
   {'ratio sep/sigma HOME':<38} {ratio_home:>10.3f}
   {'ratio sep/sigma FOOD':<38} {ratio_food:>10.3f}
+  {'HWHM HOME (demi-largeur a 50%)':<38} {hwhm_home:>10.2f}   cellules
+  {'HWHM FOOD (demi-largeur a 50%)':<38} {hwhm_food:>10.2f}   cellules
+  {'sigma_steady HOME (regime etabli)':<38} {sigma_steady_home:>10.2f}   cellules
+  {'sigma_steady FOOD (regime etabli)':<38} {sigma_steady_food:>10.2f}   cellules
   {'-'*60}
   -- Signal --
   {'delta_C_max HOME':<38} {delta_C_home:>10.3f}

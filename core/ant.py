@@ -16,7 +16,7 @@ class Ant :
         self.nest_timer = 0 
 
 
-    def move(self,delta_theta) : 
+    def move(self,delta_theta, step = 1) : 
         if self.eating_timer > 0 : 
             self.eating_timer -= 1
             self.direction += np.pi if self.eating_timer == 0 else 0
@@ -31,8 +31,8 @@ class Ant :
             return self.x, self.y # bouge pas tant que on est au nid
 
         self.direction += delta_theta
-        new_x = self.x + np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
-        new_y = self.y + np.sin(self.direction)
+        new_x = self.x + step*np.cos(self.direction) # pas de temps de 1 et vitesse de 1 case 
+        new_y = self.y + step*np.sin(self.direction)
         
         # on verifie que les valeurs ne sortent pas de smurs 
         x_clipped = np.clip(new_x, 0, GRID_WIDTH-1)
@@ -49,13 +49,16 @@ class Ant :
         self.x = x_clipped 
         self.y = y_clipped 
 
-        self.pheromone_deposit *= DECAY_FACTOR_STEP
-        if self.pheromone_deposit < 0.001 : 
-            self.pheromone_deposit = 0 
+        self.decay_pheromone_deposit()
 
         return old_x, old_y
 
-    
+    def decay_pheromone_deposit(self) :
+        self.pheromone_deposit *= DECAY_FACTOR_STEP
+        if self.pheromone_deposit < 0.001 : 
+            self.pheromone_deposit = 0
+
+
     def get_antenna_pos(self) :   
         # the head 
         hx = self.x + HALF_LENGTH_BODY*np.cos(self.direction)
@@ -72,12 +75,14 @@ class Ant :
         
 
         return left, right, front
+    
+
     def is_at_nest(self, nest) :
         x_nest, y_nest = nest.get_x_y()
         return (self.x - x_nest)**2 + (self.y - y_nest)**2 <= NEST_RADIUS**2 
 
     def interact(self, source, at_nest) :
-        if source is not None and self.food_carried < MAX_FOOD_CARRIED : 
+        if source is not None and self.food_carried < MAX_FOOD_CARRIED and self.food_carried <= TRESHOLD_FOOD : 
             # on ramasse de la nourriture si on en trouve et qu'on peut en porter plus 
             want_to_collect = min(FOOD_COLLECT_AMOUNT, MAX_FOOD_CARRIED - self.food_carried)
             taken = source.consume(want_to_collect)
@@ -92,10 +97,3 @@ class Ant :
             return deposited 
         return 0.0
     
-    
-
-        
-
- 
-
-

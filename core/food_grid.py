@@ -23,6 +23,12 @@ class FoodGrid:
                         if (x, y) not in self.proximity_map : 
                             self.proximity_map[(x, y)] = source 
 
+    def _remove_from_proximity_map(self, source) : 
+        for x in range (max(0, source.x - FOOD_RADIUS), min(GRID_WIDTH, source.x + FOOD_RADIUS + 1)) : 
+            for y in range(max(0, source.y - FOOD_RADIUS), min(GRID_HEIGHT, source.y + FOOD_RADIUS + 1)) :
+                if self.proximity_map.get((x, y)) is source : 
+                    del self.proximity_map[(x, y)]
+
     def add_source(self, source) : 
         self.sources.append(source)
         self.grid[source.type_food, source.y, source.x] = source.quantity
@@ -37,7 +43,9 @@ class FoodGrid:
                 continue
             source.recharge() 
             self.grid[source.type_food, source.y, source.x] = source.quantity 
-
+            if source.type_food == FoodSource.SUGAR and source.quantity == 0 : 
+                self._remove_from_proximity_map(source)
+        self.sources = [source for source in self.sources if not (source.type_food == FoodSource.SUGAR and source.quantity == 0)]
 
     def get_source(self, x, y) : 
         return self.proximity_map.get((x, y), None)

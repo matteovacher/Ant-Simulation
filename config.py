@@ -2,8 +2,9 @@ import numpy as np
 
 # GRID AND PHEROMONE 
 EVAPORATION_RATE_HOME = 0.999           # between 0 and 1, the higher the slower the evaporation
-EVAPORATION_RATE_FOOD = 0.996           # between 0 and 1 
-DIFFUSION_SIGMA = 0.25                  # between 0 and inf, the higher the more the pheromone spreads, but also the more it evaporates
+EVAPORATION_RATE_FOOD = 0.9975          # between 0 and 1 
+DIFFUSION_SIGMA_HOME = 0.25             # between 0 and inf, the higher the more the pheromone spreads, but also the more it evaporates
+DIFFUSION_SIGMA_FOOD = 0.275            # between 0 and inf, must be greater than sigma home because evap is less for home 
 GRID_WIDTH = 510                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
 GRID_HEIGHT = 340                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
 CELL_SIZE = 2                           # size of each cell in pixels

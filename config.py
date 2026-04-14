@@ -2,11 +2,11 @@ import numpy as np
 
 # GRID AND PHEROMONE 
 EVAPORATION_RATE_HOME = 0.999           # between 0 and 1, the higher the slower the evaporation
-EVAPORATION_RATE_FOOD = 0.9975          # between 0 and 1 
+EVAPORATION_RATE_FOOD = 0.9985          # between 0 and 1 
 DIFFUSION_SIGMA_HOME = 0.25             # between 0 and inf, the higher the more the pheromone spreads, but also the more it evaporates
 DIFFUSION_SIGMA_FOOD = 0.275            # between 0 and inf, must be greater than sigma home because evap is less for home 
-GRID_WIDTH = 510                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
-GRID_HEIGHT = 340                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
+GRID_WIDTH = 600                        # width of the grid in cells, also in pixels if cell size is 1, max 2880 for 8k screen
+GRID_HEIGHT = 400                       # height of the grid in cells, also in pixels if cell size is 1, max 1920 for 8k screen
 CELL_SIZE = 2                           # size of each cell in pixels
 FPS = 45                                # frames per second
 WINDOW_WIDTH = GRID_WIDTH*CELL_SIZE     # width of the window = width*cellsize (2880 pixels max )
@@ -25,16 +25,16 @@ NEST_Y = int(GRID_HEIGHT/2)             # coordinates of the nest, must be an in
 # ANT
 N_ANTS = 200                            # number of ants in the simulation, must be an integer greater than 0
 LENGTH_ANTENNA = 1.5                    # length from the head to the tip of the antenna in cells, must be greater than 0
-ANGLE_ANTENNA = np.pi/4                 # angle between the direction of the ant and the direction of the antenna in radians, between 0 and pi/2, if 0 then antennas are in the same direction as the ant, if pi/2 then antennas are perpendicular to the direction of the ant
+ANGLE_ANTENNA = np.pi/3                 # angle between the direction of the ant and the direction of the antenna in radians, between 0 and pi/2, if 0 then antennas are in the same direction as the ant, if pi/2 then antennas are perpendicular to the direction of the ant
 COLOR_ANT_HOME = (255, 165, 0)          # orange color for the ants exploring 
 COLOR_ANT_FOOD = (0, 200, 80)           # different green color for ants carrying food 
 MAX_FOOD_CARRIED = 0.5                  # maximum amount of food an ant can carry, between 0 and 1, if 0.5 then an ant can carry half of a food source
 FOOD_COLLECT_AMOUNT = 0.5               # amount of food an ant can collect at one time, between 0 and MAX_FOOD_CARRIED
 EAT_DURATION = 8                        # number of steps an ant needs to eat a food source, during this time the ant cannot move or interact with other food sources, must be an integer
-ANTENNA_WEIGHT = np.pi/3                # weight of the pheromone bias on the ant's direction, between 0 and pi/2, if 0 then the ant ignores the pheromones, if pi/2 then the ant turns directly towards the strongest pheromone
+ANTENNA_WEIGHT = np.pi/2.5              # weight of the pheromone bias on the ant's direction, between 0 and pi/2, if 0 then the ant ignores the pheromones, if pi/2 then the ant turns directly towards the strongest pheromone
 LIM_ANGLE = np.pi/3                     # maximum angle an ant can turn at each step
 TRESHOLD_FOOD = 0.45                    # threshold of food carried for an ant to switch from following home pheromone to following food pheromone, between 0 and MAX_FOOD_CARRIED
-RANDOM_DIR = np.pi/20                   # maximum random change in direction for an ant at each step, between 0 and pi, if 0 then the ant never changes direction randomly, if pi then the ant can turn in any direction at each step
+RANDOM_DIR = np.pi/25                   # maximum random change in direction for an ant at each step, between 0 and pi, if 0 then the ant never changes direction randomly, if pi then the ant can turn in any direction at each step
 HALF_LENGTH_BODY = 1.5                  # half of the length of the ant's body in cells, used for drawing the ant as a line before adding the antenna 
 ANT_RADIUS = 2                          # must be integer for arrays and only for the visual here 
 DECAY_FACTOR_STEP = 0.995               # decay factor applied to the pheromone deposit at each step, between 0 and 1, slowly decrease the amount of pheromone deposited 

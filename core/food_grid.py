@@ -39,13 +39,11 @@ class FoodGrid:
 
     def update(self):
         for source in self.sources : 
-            if source.type_food == FoodSource.SUGAR and source.quantity == 0 :
-                continue
             source.recharge() 
             self.grid[source.type_food, source.y, source.x] = source.quantity 
             if source.type_food == FoodSource.SUGAR and source.quantity == 0 : 
                 self._remove_from_proximity_map(source)
-        self.sources = [source for source in self.sources if not (source.type_food == FoodSource.SUGAR and source.quantity == 0)]
+        self.sources = [source for source in self.sources if not (source.type_food == FoodSource.SUGAR and source.quantity == 0.0)]
 
     def get_source(self, x, y) : 
         return self.proximity_map.get((x, y), None)

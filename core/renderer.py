@@ -98,6 +98,8 @@ class Renderer:
         return rgb.astype(np.uint8)
 
     def _get_nest_surface(self, nest):
+        if nest is None : 
+            return np.zeros((GRID_HEIGHT, GRID_WIDTH, 3), dtype=np.uint8)
         surface = np.zeros((GRID_HEIGHT, GRID_WIDTH, 3))
         x, y = nest.get_x_y()
         dy, dx = np.ogrid[-NEST_RADIUS:NEST_RADIUS+1, -NEST_RADIUS:NEST_RADIUS+1]

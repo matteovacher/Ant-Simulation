@@ -9,21 +9,33 @@ import numpy as np
 import tests.tests_food as tf 
 from core.nest import Nest
 from core.ant import Ant 
+from map.manage_map import load_map
+
+def rules() : 
+    print("\n --- RULES --- \n")
+    print(" Here are the rules of the simulation control : \n")
+    print(" - Press Q to display the strongest pheromone between HOME and FOOD")
+    print(" - Press S to display only the HOME pheromone")
+    print(" - Press D to display only the FOOD pheromone")
+    print(" - Click with the left mouse button to add an APHID food source at the clicked location")
+    print(" - Click with the right mouse button to add a SUGAR food source at the clicked location")
+    print("\n To close the simulation, simply click on the close button of the window\n")
+    print(" --- END --- \n")
 
 if __name__ == "__main__" :
+
+    pheromone_grids = PheromoneGrid()
+
+    rules()
+    food_grid, nest = load_map() 
 
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Simulation Grid")
     clock = pygame.time.Clock()
-
-    pheromone_grids = PheromoneGrid()
-    nest = Nest(NEST_X, NEST_Y)
-    food_grid = FoodGrid([])
-
     running = True 
 
-    ants = [Ant(NEST_X, NEST_Y, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
+    ants = [Ant(nest.x, nest.y, ANGLE_ANTENNA, LENGTH_ANTENNA) for i in range(N_ANTS)]
 
     env = Environment(pheromone_grids, nest, food_grid, ants) # emplacement du nid au milieu
     renderer = Renderer()
